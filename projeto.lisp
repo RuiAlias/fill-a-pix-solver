@@ -5,8 +5,8 @@
 
 (defstruct (restricao (:constructor cria-restricao (variaveis funcao-validacao))) 
   "Tipo restricao caracterizado por uma lista das variaveis envolvidas na restricao, e uma funcao que verifica a restricao."
-  variaveis
-  funcao-validacao)
+  variaveis ; lista de variaveis
+  funcao-validacao) ; predicado
 
 ;;;;; restricao-variaveis: restricao -> lista de variaveis
 
@@ -17,7 +17,7 @@
 ;;;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
 (defstruct (psr (:constructor cria-psr (variaveis-todas dominios restricoes))) 
   "Tipo PSR (Problema de Satisfacao de Restricoes)"
-  variaveis-todas ; lista
+  variaveis-todas ; lista de strings
   dominios ; lista de listas
   restricoes)
 
@@ -25,12 +25,17 @@
 
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
-  (remove nil (mapcar #'(lambda (x y) (if (= (length y) 1) (cons x y))) 
+  (remove nil (mapcar #'(lambda (x y) (when (= (length y) 1) (cons x y))) 
 	      (psr-variaveis-todas p) (psr-dominios p))))
 	 
 ;;;;; psr-variaveis-todas: PSR -> lista variaveis
 
 ;;;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
+
+(defun psr-variaveis-nao-atribuidas (p)
+  ""
+  (mapcan #'(lambda (v d) (when (< (length d) 2) (list v))) 
+	  (psr-variaveis-todas p) (psr-restricoes p)))
 
 ;;;;; psr-variavel-valor: PSR x variavel -> objecto
 
