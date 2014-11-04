@@ -39,6 +39,10 @@
 
 ;;;;; psr-variavel-valor: PSR x variavel -> objecto
 
+(defun psr-variavel-valor (p v)
+  "Devolve o valor atribuido a variavel (caso nao exista atribuicao devolve nil)."
+  (rest (first (member v (psr-atribuicoes p) :test #'equal :key #'first))))
+
 ;;;;; psr-variavel-dominio: PSR x variavel -> dominio
 
 ;;;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
