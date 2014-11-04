@@ -33,7 +33,7 @@
 ;;;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
 
 (defun psr-variaveis-nao-atribuidas (p)
-  ""
+  "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
   (mapcan #'(lambda (v d) (when (< (length d) 2) (list v))) 
 	  (psr-variaveis-todas p) (psr-restricoes p)))
 
