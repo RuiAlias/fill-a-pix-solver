@@ -45,6 +45,13 @@
 
 ;;;;; psr-variavel-dominio: PSR x variavel -> dominio
 
+(defun psr-variavel-dominio (p v)
+  "Devolve o dominio associado a uma variavel."
+  (rest (first (member v 
+		       (mapcar #'cons (psr-variaveis-todas p) (psr-dominios p)) 
+		       :test #'equal 
+		       :key #'first))))
+
 ;;;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 
 ;;;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
