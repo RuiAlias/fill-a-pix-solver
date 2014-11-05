@@ -72,7 +72,7 @@
 
 ;;;;; psr-completo-p: PSR -> logico
 (defun psr-completo-p (p)
-	(if (Null (psr-variaveis-nao-atribuidas p)) T NIL))
+	(if (null (psr-variaveis-nao-atribuidas p)) T NIL))
 
 ;;;;; psr-consistente-p: PSR -> logico, inteiro
 (defun psr-consistente-p (p v)
