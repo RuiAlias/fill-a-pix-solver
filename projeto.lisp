@@ -70,10 +70,12 @@
 ;;;;; psr-remove-atribuicao!: PSR x variavel -> {}
 (defun psr-remove-atribuicao! (p v)
   ""
-  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) (list 0 1))))
+  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) (list 0 1)))
 
 ;;;;; psr-altera-dominio!: PSR x variavel x dominio {}
-(defun psr-altera-dominio! (p v d))
+(defun psr-altera-dominio! (p v d)
+  ""
+  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) d))
 
 ;;;;; psr-completo-p: PSR -> logico
 (defun psr-completo-p (p)
