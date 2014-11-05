@@ -60,8 +60,11 @@
   
   ; (remove "a" (list r1 r2) :key #'restricao-variaveis :test-not #'(lambda(r l) (member r l :test #'equal)))
 )
+
 ;;;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
-(defun psr-adiciona-atribuicao! (p v n))
+(defun psr-adiciona-atribuicao! (p v n)
+  ""
+  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) (list v)))
 
 
 ;;;;; psr-remove-atribuicao!: PSR x variavel -> {}
