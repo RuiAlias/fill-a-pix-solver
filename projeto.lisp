@@ -25,8 +25,8 @@
 
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
-  (remove nil (mapcar #'(lambda (v d) (when (= (length d) 1) (cons v (first d))))
-	      (psr-variaveis-todas p) (psr-dominios p))))
+  (remove nil (mapcar #'(lambda (v d) (when (= (length d) 1) (cons v (first d)))) 
+		      (psr-variaveis-todas p) (psr-dominios p))))
 	 
 ;;; psr-variaveis-todas: PSR -> lista variaveis
 
