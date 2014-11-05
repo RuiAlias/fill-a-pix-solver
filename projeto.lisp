@@ -92,3 +92,17 @@
 
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
 (defun psr-atribuicoes-consistentes-arco-p (p v1 n1 v2 n2))
+
+
+;;;; 2.2.1 Funcoes de conversao
+
+;;; fill-a-pix->psr: array -> PSR
+
+;;; psr->fill-a-pix: PSR x inteiro x inteiro -> array
+
+
+;;;; 2.2.2
+
+;;; procura-retrocesso-simples: PSR -> PSR, inteiro
+
+;;; resolve-simples: array -> array
