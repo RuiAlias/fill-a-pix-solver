@@ -61,17 +61,27 @@
   ; (remove "a" (list r1 r2) :key #'restricao-variaveis :test-not #'(lambda(r l) (member r l :test #'equal)))
 )
 ;;;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
+(defun psr-adiciona-atribuicao! (p v n)
 
-;;;;; psr-remove-atribuicao!: PSR x variavel x valor -> {}
+
+;;;;; psr-remove-atribuicao!: PSR x variavel -> {}
+(defun psr-remove-atribuicao! (p v)
 
 ;;;;; psr-altera-dominio!: PSR x variavel x domínio {}
+(defun psr-altera-dominio! (p v d)
 
 ;;;;; psr-completo-p: PSR -> logico
+(defun psr-completo-p (p)
+	(if (Null (psr-variaveis-nao-atribuidas p)) T NIL))
 
 ;;;;; psr-consistente-p: PSR -> logico, inteiro
+(defun psr-consistente-p (p v)
 
 ;;;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
+(defun psr-variavel-consistente-p (p v)
 
 ;;;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
+(defun psr-atribuicao-consistente-p (p v n)
 
 ;;;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
+(defun psr-atribuicoes-consistentes-arco-p (p v1 n1 v2 n2)
