@@ -17,9 +17,9 @@
 ;;;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
 (defstruct (psr (:constructor cria-psr (variaveis-todas dominios restricoes))) 
   "Tipo PSR (Problema de Satisfacao de Restricoes)"
-  variaveis-todas ; lista de strings
-  dominios ; lista de listas
-  restricoes)
+  variaveis-todas  ; lista (tamanho N) de strings
+  dominios         ; lista (tamanho N) de listas
+  restricoes)      ; lista de restricoes
 
 ;;;;; psr-atribuicoes: PSR -> lista atribuicoes
 
@@ -54,6 +54,12 @@
 
 ;;;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 
+(defun psr-variavel-restricoes (p v)
+  ""
+  ; (remove-if-not #'(lambda (l) (member "a" l :test #'equal)) (list r1 r2) :key #'restricao-variaveis)
+  ; ou
+  ; (remove "a" (list r1 r2) :key #'restricao-variaveis :test-not #'(lambda(r l) (member r l :test #'equal)))
+)
 ;;;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
 
 ;;;;; psr-remove-atribuicao!: PSR x variavel x valor -> {}
