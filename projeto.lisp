@@ -82,7 +82,7 @@
   (if (null (psr-variaveis-nao-atribuidas p)) T NIL))
 
 ;;; psr-consistente-p: PSR -> logico, inteiro
-(defun psr-consistente-p (p v))
+(defun psr-consistente-p (p))
 
 ;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
 (defun psr-variavel-consistente-p (p v))
