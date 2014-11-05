@@ -25,8 +25,8 @@
 
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
-  (remove nil (mapcar #'(lambda (x y) (when (= (length y) 1) (cons x y))) 
-	      (psr-variaveis-todas p) (psr-dominios p))))
+  (mapcan #'(lambda (x y) (when (= (length y) 1) (cons x y))) 
+	      (psr-variaveis-todas p) (psr-dominios p)))
 	 
 ;;; psr-variaveis-todas: PSR -> lista variaveis
 
@@ -34,8 +34,8 @@
 
 (defun psr-variaveis-nao-atribuidas (p)
   "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
-  (mapcan #'(lambda (v d) (when (= (length d) 2) (list v))) 
-	  (psr-variaveis-todas p) (psr-restricoes p)))
+ (mapcan #'(lambda (v d) (when (not(= (length d) 1)) (list v))) 
+	      (psr-variaveis-todas p) (psr-dominios p)))
 
 ;;; psr-variavel-valor: PSR x variavel -> objecto
 
