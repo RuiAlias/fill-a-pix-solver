@@ -34,7 +34,7 @@
 
 (defun psr-variaveis-nao-atribuidas (p)
   "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
-  (mapcan #'(lambda (v d) (when (< (length d) 2) (list v))) 
+  (mapcan #'(lambda (v d) (when (= (length d) 2) (list v))) 
 	  (psr-variaveis-todas p) (psr-restricoes p)))
 
 ;;;;; psr-variavel-valor: PSR x variavel -> objecto
@@ -55,9 +55,9 @@
 ;;;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 
 (defun psr-variavel-restricoes (p v)
-  ""
-  ; (remove-if-not #'(lambda (l) (member "a" l :test #'equal)) (list r1 r2) :key #'restricao-variaveis)
-  ; ou
+  "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
+  (remove-if-not #'(lambda (l) (member v l :test #'equal)) (psr-restricoes p) :key #'restricao-variaveis)
+  
   ; (remove "a" (list r1 r2) :key #'restricao-variaveis :test-not #'(lambda(r l) (member r l :test #'equal)))
 )
 ;;;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
