@@ -152,7 +152,8 @@
 
 
 ;;; psr->fill-a-pix: PSR x inteiro x inteiro -> array
-
+(defun psr->fill-a-pix (psr l c	)
+  (make-array (list l c) :initial-contents ' "para cada variavel no psr receber o dominio")
 
 ;;;; 2.2.2
 
