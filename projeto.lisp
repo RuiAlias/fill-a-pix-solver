@@ -126,6 +126,30 @@
 ;;;; 2.2.1 Funcoes de conversao
 
 ;;; fill-a-pix->psr: array -> PSR
+(defun fill-a-pix->psr (tab) ; tab de tabuleiro
+  ""
+  (dotimes (l (array-dimension tab 0))   ; linha
+    (dotimes (c (array-dimension tab 1)) ; coluna
+      (push (write-to-string (cons l c)) variaveis)
+      (push (list 0 1) dominios)
+      (when (numberp (aref tab l c))
+	(push (cria-restricao 
+	       (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1))
+	       #'(lambda (x) t)))))))
+
+
+(defun variaveis-a-volta (linha coluna max-linha max-coluna)
+  "Devolve uma lista com as coordenadas, em formato string '(linha . coluna)', a volta da coordenada
+   fornecida tendo em conta as dimensoes do tabuleiro (0 <= linhas  < max-linha e 
+                                                       0 <= colunas < max-coluna)."
+  (let ((variaveis (list))) 
+    (loop for delta-l from -1 to 1 do
+	 (loop for delta-c from -1 to 1 do
+	      (let ((l (+ linha delta-l)) (c (+ coluna delta-c))) 
+		(when (and (>= l 0) (< l max-linha) (>= c 0) (< c max-coluna)) 
+		  (push (write-to-string (cons l c)) variaveis)))))
+    variaveis)) ; a lista retornada vem na ordem oposta ao esperado. Pode-se corrigir com `reverse'.
+
 
 ;;; psr->fill-a-pix: PSR x inteiro x inteiro -> array
 
