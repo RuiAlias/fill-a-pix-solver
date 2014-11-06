@@ -114,7 +114,13 @@
 
 
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
-(defun psr-atribuicoes-consistentes-arco-p (p v1 n1 v2 n2))
+(defun psr-atribuicoes-consistentes-arco-p (p v1 valor1 v2 valor2)
+  ""
+  (let ((consistente1 t) (testes1 0) (consistente2 t) (testes2 0))
+    (setf (values consistente1 testes1) (psr-atribuicao-consistente-p p v1 valor1))
+    (when consistente1 
+      (setf (values consistente2 testes2) (psr-atribuicao-consistente-p p v2 valor2)))
+    (values (and consistente1 consistente2) (+ testes1 testes2))))
 
 
 ;;;; 2.2.1 Funcoes de conversao
