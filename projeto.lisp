@@ -91,7 +91,7 @@
   (let ((testes 0)) 
     (dolist (r (psr-restricoes p) (values t testes)) 
       (incf testes) 
-      (when (null (funcall r p)) (return (values nil testes))))))
+      (when (null (funcall (restricao-funcao-validacao r) p)) (return (values nil testes))))))
 
 
 ;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
@@ -100,11 +100,17 @@
   (let ((testes 0)) 
     (dolist (r (psr-variavel-restricoes p v) (values t testes)) 
       (incf testes) 
-      (when (null (funcall r p)) (return (values nil testes))))))
+      (when (null (funcall (restricao-funcao-validacao r) p)) (return (values nil testes))))))
 
 
 ;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
-(defun psr-atribuicao-consistente-p (p v n))
+(defun psr-atribuicao-consistente-p (p v valor)
+  ""
+  (let ((antigo-dominio (psr-variavel-dominio p v)) (consistente t) (testes 0))
+    (psr-adiciona-atribuicao! p v valor)
+    (setf (values consistente testes) (psr-variavel-consistente-p p v))
+    (psr-altera-dominio! p v antigo-dominio)
+    (values consistente testes)))
 
 
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
