@@ -72,23 +72,40 @@
   ""
   (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) NIL))
 
+
 ;;; psr-altera-dominio!: PSR x variavel x dominio {}
 (defun psr-altera-dominio! (p v d)
   ""
   (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) d))
-  
+
+
 ;;; psr-completo-p: PSR -> logico
 (defun psr-completo-p (p)
+  ""
   (if (null (psr-variaveis-nao-atribuidas p)) T NIL))
 
+
 ;;; psr-consistente-p: PSR -> logico, inteiro
-(defun psr-consistente-p (p))
+(defun psr-consistente-p (p)
+  ""
+  (let ((testes 0)) 
+    (dolist (r (psr-restricoes p) (values t testes)) 
+      (incf testes) 
+      (when (null (funcall r p)) (return (values nil testes))))))
+
 
 ;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
-(defun psr-variavel-consistente-p (p v))
+(defun psr-variavel-consistente-p (p v)
+  ""
+  (let ((testes 0)) 
+    (dolist (r (psr-variavel-restricoes p v) (values t testes)) 
+      (incf testes) 
+      (when (null (funcall r p)) (return (values nil testes))))))
+
 
 ;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
 (defun psr-atribuicao-consistente-p (p v n))
+
 
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
 (defun psr-atribuicoes-consistentes-arco-p (p v1 n1 v2 n2))
@@ -106,3 +123,6 @@
 ;;; procura-retrocesso-simples: PSR -> PSR, inteiro
 
 ;;; resolve-simples: array -> array
+
+
+
