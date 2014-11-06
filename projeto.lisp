@@ -154,9 +154,19 @@
     (cria-psr (nreverse variaveis) (nreverse dominios) restricoes)))
 
 
+(defun lista->lista2d (lista linhas colunas)
+  "Recebe uma lista de listas e devolve uma nova lista em formato de matriz."
+  (loop for l below linhas
+     collect (loop for c below colunas
+		append (nth (+ (* l colunas) c) lista))))
+
+
 ;;; psr->fill-a-pix: PSR x inteiro x inteiro -> array
-(defun psr->fill-a-pix (psr linhas colunas)
-  (make-array (list linhas colunas) :initial-contents ' "para cada variavel no psr receber o dominio")
+(defun psr->fill-a-pix (p linhas colunas)
+  ""
+  (make-array (list linhas colunas) 
+	      :initial-contents (lista->lista2d (psr-variaveis-todas p) ; nao parece mto eficiente
+					       linhas colunas)))
 
 ;;;; 2.2.2
 
