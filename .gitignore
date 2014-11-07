@@ -3,3 +3,4 @@
 *.lisp-temp
 *.fas
 *.lib
+submissao.lisp
