@@ -149,7 +149,7 @@
 	(when (numberp (aref tab l c))
 	  (push (cria-restricao 
 		 (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1))
-		 #'(lambda (x) t))
+		 #'(lambda (x) t)) ; TODO
 		restricoes))))
     (cria-psr (nreverse variaveis) (nreverse dominios) restricoes)))
 
@@ -165,7 +165,7 @@
 (defun psr->fill-a-pix (p linhas colunas)
   ""
   (make-array (list linhas colunas) 
-	      :initial-contents (lista->lista2d (psr-variaveis-todas p) ; nao parece mto eficiente
+	      :initial-contents (lista->lista2d (psr-dominios p) ; nao parece mto eficiente
 					       linhas colunas)))
 
 ;;;; 2.2.2
