@@ -149,7 +149,7 @@
 	(when (numberp (aref tab l c))
 	  (push (cria-restricao 
 		 (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1))
-		 #'(lambda (x) t)) ; TODO
+		 #'(lambda (x) (identity x))) ; TODO
 		restricoes))))
     (cria-psr (nreverse variaveis) (nreverse dominios) restricoes)))
 
