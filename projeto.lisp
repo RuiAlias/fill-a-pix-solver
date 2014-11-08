@@ -61,6 +61,14 @@
   ; (remove "a" (list r1 r2) :key #'restricao-variaveis :test-not #'(lambda(r l) (member r l :test #'equal)))
 )
 
+
+(defun psr-restricoes-ambas-variaveis (p v1 v2)
+  "Devolve uma lista com todas as restricoes aplicaveis a ambas as variaveis."
+  (remove-if-not #'(lambda (l) (member v2 l :test #'equal))
+		 (psr-variavel-restricoes p v1)
+		 :key #'restricao-variaveis)
+)
+
 ;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
 (defun psr-adiciona-atribuicao! (p v n)
   ""
@@ -85,22 +93,26 @@
   (null (psr-variaveis-nao-atribuidas p)))
 
 
+;;; AUXILIAR
+(defun psr-testa-restricoes (p restricoes)
+  "Testa uma lista de restricoes e devolve dois valores. O primeiro, um boleano que indica se todas
+  as restricoes se verificam e o segundo indica o numero de testes realizados."
+  (let ((testes 0)) 
+    (dolist (r restricoes (values t testes)) 
+      (incf testes) 
+      (when (null (funcall (restricao-funcao-validacao r) p)) (return (values nil testes))))))
+
+
 ;;; psr-consistente-p: PSR -> logico, inteiro
 (defun psr-consistente-p (p)
   ""
-  (let ((testes 0)) 
-    (dolist (r (psr-restricoes p) (values t testes)) 
-      (incf testes) 
-      (when (null (funcall (restricao-funcao-validacao r) p)) (return (values nil testes))))))
+  (psr-testa-restricoes p (psr-restricoes p)))
 
 
 ;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
 (defun psr-variavel-consistente-p (p v)
   ""
-  (let ((testes 0)) 
-    (dolist (r (psr-variavel-restricoes p v) (values t testes)) 
-      (incf testes) 
-      (when (null (funcall (restricao-funcao-validacao r) p)) (return (values nil testes))))))
+  (psr-testa-restricoes p (psr-variavel-restricoes p v)))
 
 
 ;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
@@ -116,11 +128,17 @@
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
 (defun psr-atribuicoes-consistentes-arco-p (p v1 valor1 v2 valor2)
   ""
-  (let ((consistente1 t) (testes1 0) (consistente2 t) (testes2 0))
-    (setf (values consistente1 testes1) (psr-atribuicao-consistente-p p v1 valor1))
-    (when consistente1 
-      (setf (values consistente2 testes2) (psr-atribuicao-consistente-p p v2 valor2)))
-    (values (and consistente1 consistente2) (+ testes1 testes2))))
+  (let ((antigo-dominio1 (psr-variavel-dominio p v1))
+	(antigo-dominio2 (psr-variavel-dominio p v2))
+	(consistente t)
+	(testes 0))
+    (psr-adiciona-atribuicao! p v1 valor1)
+    (psr-adiciona-atribuicao! p v2 valor2)
+    (setf (values consistente testes) 
+	  (psr-testa-restricoes p (psr-restricoes-ambas-variaveis p v1 v2)))
+    (psr-altera-dominio! p v1 antigo-dominio1)
+    (psr-altera-dominio! p v2 antigo-dominio2)
+    (values consistente testes)))
 
 
 ;;;; 2.2.1 Funcoes de conversao
