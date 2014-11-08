@@ -1,5 +1,7 @@
 ;;;;; projeto.lisp
 
+(load "exemplos")
+
 ;;;; 2.1.1 Tipo Restricao
 ;;; cria-restricao: lista de variaveis x predicado -> restricao
 
@@ -153,7 +155,7 @@
 	      (let ((l (+ linha delta-l)) (c (+ coluna delta-c))) 
 		(when (and (>= l 0) (< l max-linha) (>= c 0) (< c max-coluna)) 
 		  (push (write-to-string (cons l c)) variaveis)))))
-    variaveis)) ; a lista retornada vem na ordem oposta ao esperado. Pode-se corrigir com `nreverse'
+    (nreverse variaveis)))
 
 
 ;;; fill-a-pix->psr: array -> PSR
@@ -170,12 +172,17 @@
 	    (push 
 	     (cria-restricao 
 	      vav 
-	      #'(lambda (p) (<= numero 
-				(count t (mapcar #'(lambda (v) 
-						     (let ((d (psr-variavel-dominio p v))) 
-						       (not (and (= (length d) 1) 
-								 (= (first d) 0))))) 
-						 vav)))))
+	      (if (= numero 0)
+		  #'(lambda (p) (not (find t (mapcar #'(lambda (v)
+						    (let ((d (psr-variavel-dominio p v)))
+						      (= (first d) 1)))
+						vav))))
+		  #'(lambda (p) (<= numero
+				    (count t (mapcar #'(lambda (v)
+							 (let ((d (psr-variavel-dominio p v)))
+							   (not (and (= (length d) 1)
+								     (= (first d) 0)))))
+						     vav))))))
 	     restricoes)))))
     (cria-psr (nreverse variaveis) (nreverse dominios) (nreverse restricoes))))
 
@@ -212,8 +219,8 @@
 		(multiple-value-bind (recurs-consistente recurs-testes) (procura-retrocesso-simples p)
 		  (incf testes-total recurs-testes)
 		  (when (not (null recurs-consistente))
-		    (return-from procura-retrocesso-simples (values p testes-total)))))
-	      (psr-altera-dominio! p v d)))
+		    (return-from procura-retrocesso-simples (values p testes-total))))
+		(psr-altera-dominio! p v d))))
 	  (return-from procura-retrocesso-simples (values nil testes-total))))))
 
 
