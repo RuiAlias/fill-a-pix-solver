@@ -147,10 +147,18 @@
 	(push (write-to-string (cons l c)) variaveis)
 	(push (list 0 1) dominios)
 	(when (numberp (aref tab l c))
-	  (push (cria-restricao 
-		 (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1))
-		 #'(lambda (x) (identity x))) ; TODO
-		restricoes))))
+	  (let ((vav (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1)))
+		(numero (aref tab l c))) ; TODO testar se e mesmo preciso e se sim passar para antes do when
+	    (push 
+	     (cria-restricao 
+	      vav 
+	      #'(lambda (p) (<= numero 
+				(count t (mapcar #'(lambda (v) 
+						     (let ((d (psr-variavel-dominio p v))) 
+						       (not (and (= (length d) 1) 
+								 (= (first d) 0))))) 
+						 vav)))))
+	     restricoes)))))
     (cria-psr (nreverse variaveis) (nreverse dominios) restricoes)))
 
 
