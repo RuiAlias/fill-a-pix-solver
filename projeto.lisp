@@ -1,6 +1,6 @@
-;;;;; projeto.lisp
+;;;;; Grupo 30 Taguspark - 77213 Rui Silva, 82134 Jorge Almeida
 
-(load "exemplos")
+(load (compile-file “exemplos.lisp”))
 
 ;;;; 2.1.1 Tipo Restricao
 ;;; cria-restricao: lista de variaveis x predicado -> restricao
@@ -229,5 +229,3 @@
   ""
   (multiple-value-bind (p) (procura-retrocesso-simples (fill-a-pix->psr tab))
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
-
-
