@@ -197,6 +197,12 @@
 ;;;; 2.2.2
 
 ;;; procura-retrocesso-simples: PSR -> PSR, inteiro
+(defun procura-retrocesso-simples (p)
+  ""
+  (if (psr-completo-p p)
+      p
+      (let ((v (first (psr-variaveis-nao-atribuidas p))))
+	)))
 
 ;;; resolve-simples: array -> array
 
