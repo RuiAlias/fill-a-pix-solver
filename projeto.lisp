@@ -1,6 +1,6 @@
 ;;;;; Grupo 30 Taguspark - 77213 Rui Silva, 82134 Jorge Almeida
 
-(load (compile-file "exemplos.lisp"))
+(load "exemplos")
 
 ;;;; 2.1.1 Tipo Restricao
 ;;; cria-restricao: lista de variaveis x predicado -> restricao
@@ -158,6 +158,14 @@
     (nreverse variaveis)))
 
 
+(defun psr-conta-valor (p variaveis valor)
+  "Devolve o numero de variaveis (do argumento) que tem como valor o 'valor'."
+  (count t (mapcar
+	    #'(lambda (v) (let ((d (psr-variavel-dominio p v)))
+				(and (= (length d) 1) (= valor (first d)))))
+	    variaveis)))
+
+
 ;;; fill-a-pix->psr: array -> PSR
 (defun fill-a-pix->psr (tab) ; tab de tabuleiro
   ""
@@ -171,18 +179,10 @@
 		(numero (aref tab l c))) ; TODO testar se e mesmo preciso e se sim passar para antes do when
 	    (push 
 	     (cria-restricao 
-	      vav 
-	      (if (= numero 0)
-		  #'(lambda (p) (not (find t (mapcar #'(lambda (v)
-						    (let ((d (psr-variavel-dominio p v)))
-						      (= (first d) 1)))
-						vav))))
-		  #'(lambda (p) (<= numero
-				    (count t (mapcar #'(lambda (v)
-							 (let ((d (psr-variavel-dominio p v)))
-							   (not (and (= (length d) 1)
-								     (= (first d) 0)))))
-						     vav))))))
+	      vav
+	      #'(lambda (p) (let ((pretas (psr-conta-valor p vav 1))
+				  (brancas (psr-conta-valor p vav 0)))
+			      (and (<= pretas numero) (<= brancas (- (length vav) numero))))))
 	     restricoes)))))
     (cria-psr (nreverse variaveis) (nreverse dominios) (nreverse restricoes))))
 
