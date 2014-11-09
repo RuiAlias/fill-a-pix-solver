@@ -1,6 +1,6 @@
 ;;;;; Grupo 30 Taguspark - 77213 Rui Silva, 82134 Jorge Almeida
 
-(load "exemplos")
+(load "exemplos.fas")
 
 ;;;; 2.1.1 Tipo Restricao
 ;;; cria-restricao: lista de variaveis x predicado -> restricao
