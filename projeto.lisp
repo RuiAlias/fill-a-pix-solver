@@ -15,47 +15,54 @@
 ;;; restricao-funcao-validacao: restricao -> predicado
 
 ;;;; 2.1.2 Tipo PSR
-
-;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
-(defstruct (psr (:constructor cria-psr (variaveis-todas dominios restricoes))) 
+(defstruct psr
   "Tipo PSR (Problema de Satisfacao de Restricoes)"
-  variaveis-todas  ; lista (tamanho N) de strings
-  dominios         ; lista (tamanho N) de listas
+  variaveis-todas
+  pares
   restricoes)      ; lista de restricoes
 
-;;; psr-atribuicoes: PSR -> lista atribuicoes
 
+;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
+(defun cria-psr (variaveis dominios restricoes)
+  ""
+  (let ((pares (make-hash-table :test 'equal)))
+    (mapcar #'(lambda (v d) (setf (gethash v pares) d)) variaveis dominios)
+    (make-psr :variaveis-todas variaveis :pares pares :restricoes restricoes)))
+
+
+;;; psr-atribuicoes: PSR -> lista atribuicoes
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
-  (remove nil (mapcar #'(lambda (v d) (when (= (length d) 1) (cons v (first d)))) 
-		      (psr-variaveis-todas p) (psr-dominios p))))
+  (let ((atribuicoes (list)))
+    (maphash #'(lambda (v d) (when (= (length d) 1) (push (cons v (first d)) atribuicoes))) 
+	     (psr-pares p))
+    atribuicoes))
+
 	 
 ;;; psr-variaveis-todas: PSR -> lista variaveis
 
-;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
 
+;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
 (defun psr-variaveis-nao-atribuidas (p)
   "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
- (mapcan #'(lambda (v d) (when (not(= (length d) 1)) (list v))) 
-	      (psr-variaveis-todas p) (psr-dominios p)))
+ (mapcan #'(lambda (v) (when (not(= (length (gethash v (psr-pares p))) 1)) (list v))) 
+	      (psr-variaveis-todas p)))
+
 
 ;;; psr-variavel-valor: PSR x variavel -> objecto
-
 (defun psr-variavel-valor (p v)
   "Devolve o valor atribuido a variavel (caso nao exista atribuicao devolve nil)."
-  (rest (first (member v (psr-atribuicoes p) :test #'equal :key #'first))))
+  (first (gethash v (psr-pares p) nil))) ; nao testa se e' atribuicao!!
+					 ; devolve apenas o primeiro elem do dominio
+
 
 ;;; psr-variavel-dominio: PSR x variavel -> dominio
-
 (defun psr-variavel-dominio (p v)
   "Devolve o dominio associado a uma variavel."
-  (rest (first (member v 
-		       (mapcar #'cons (psr-variaveis-todas p) (psr-dominios p)) 
-		       :test #'equal 
-		       :key #'first))))
+  (gethash v (psr-pares p)))
+
 
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
-
 (defun psr-variavel-restricoes (p v)
   "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
   (remove-if-not #'(lambda (l) (member v l :test #'equal)) (psr-restricoes p) :key #'restricao-variaveis)
@@ -71,22 +78,23 @@
 		 :key #'restricao-variaveis)
 )
 
+
 ;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
 (defun psr-adiciona-atribuicao! (p v n)
   ""
-  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) (list n)))
+  (setf (gethash v (psr-pares p)) (list n)))
 
 
 ;;; psr-remove-atribuicao!: PSR x variavel -> {}
 (defun psr-remove-atribuicao! (p v)
   ""
-  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) NIL))
+  (setf (gethash v (psr-pares p)) nil))
 
 
 ;;; psr-altera-dominio!: PSR x variavel x dominio {}
 (defun psr-altera-dominio! (p v d)
   ""
-  (setf (nth (position v (psr-variaveis-todas p) :test #'equal) (psr-dominios p)) d))
+  (setf (gethash v (psr-pares p)) d))
 
 
 ;;; psr-completo-p: PSR -> logico
@@ -197,9 +205,11 @@
 ;;; psr->fill-a-pix: PSR x inteiro x inteiro -> array
 (defun psr->fill-a-pix (p linhas colunas)
   ""
-  (make-array (list linhas colunas) 
-	      :initial-contents (lista->lista2d (psr-dominios p) ; nao parece mto eficiente
-					       linhas colunas)))
+  (let ((tab (make-array (list linhas colunas)))
+	(i 0))
+    (dolist (v (psr-variaveis-todas p) tab)
+      (setf (aref tab (floor i colunas) (mod i colunas)) (first (gethash v (psr-pares p))))
+      (incf i))))
 
 ;;;; 2.2.2
 
