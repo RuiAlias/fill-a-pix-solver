@@ -70,6 +70,11 @@
   (gethash v (psr-hash-d p)))
 
 
+(defun psr-var-atribuida-p (p v)
+  "Devolve booleano que indica se a variavel esta ou nao atribuida."
+  (= (length (psr-variavel-dominio p v)) 1))
+
+
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 (defun psr-variavel-restricoes (p v)
   "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
@@ -242,13 +247,6 @@
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
 
 
-
-
-(defun psr-var-atribuida-p (p v)
-  ""
-  (= (length (psr-variavel-dominio p v)) 1))
-
-
 (defun n-restricoes-c-natribuidas (p v)
   ""
   (count-if #'(lambda (r) (some #'(lambda (v) (psr-var-atribuida-p p v))
@@ -258,10 +256,8 @@
 
 (defun psr-var-maior-grau (p)
   ""
-  (reduce #'(lambda (v1 v2) (if (> (n-restricoes-c-natribuidas p v1)
-				   (n-restricoes-c-natribuidas p v2))
-				v1 v2))
-	  (psr-variaveis-nao-atribuidas p)))
+  (first (sort (psr-variaveis-nao-atribuidas p) #'> :key #'(lambda (v)
+							     (n-restricoes-c-natribuidas p v)))))
 
 
 ;;; procura-retrocesso-grau: PSR -> PSR, inteiro
