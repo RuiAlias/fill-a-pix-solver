@@ -19,39 +19,41 @@
 (defstruct psr
   "Tipo PSR (Problema de Satisfacao de Restricoes)"
   variaveis-todas
-  pares
-  restricoes)      ; lista de restricoes
+  restricoes       ; lista de restricoes
+  hash-d
+  hash-r)
 
 
 ;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
 (defun cria-psr (variaveis dominios restricoes)
   ""
-  (let ((pares (make-hash-table :test 'equal)))
-    (mapcar #'(lambda (v d) (setf (gethash v pares) (vector d nil))) variaveis dominios)
+  (let ((hash-d (make-hash-table :test 'equal))
+	(hash-r (make-hash-table :test 'equal)))
+    (mapcar #'(lambda (v d) (setf (gethash v hash-d) d)) variaveis dominios)
     (dolist (r restricoes)
       (dolist (v (restricao-variaveis r) v)
-	(push r (elt (gethash v pares) 1))))
-    (maphash #'(lambda (v dr) (declare (ignore v)) (nreverse (elt dr 1))) pares)
-    (make-psr :variaveis-todas variaveis :pares pares :restricoes restricoes)))
+	(push r (gethash v hash-r))))
+    (maphash #'(lambda (v r) (declare (ignore v)) (nreverse r)) hash-r)
+    (make-psr :variaveis-todas variaveis :restricoes restricoes :hash-d hash-d :hash-r hash-r)))
 
 
 ;;; psr-atribuicoes: PSR -> lista atribuicoes
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
   (let ((atribuicoes (list)))
-    (maphash #'(lambda (v dr) (when (= (length (elt dr 0)) 1)
-				(push (cons v (first (elt dr 0))) atribuicoes))) 
-	     (psr-pares p))
+    (maphash #'(lambda (v d) (when (= (length d) 1)
+				(push (cons v (first d)) atribuicoes)))
+	     (psr-hash-d p))
     atribuicoes))
 
-	 
+
 ;;; psr-variaveis-todas: PSR -> lista variaveis
 
 
 ;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
 (defun psr-variaveis-nao-atribuidas (p)
   "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
- (mapcan #'(lambda (v) (when (not(= (length (elt (gethash v (psr-pares p)) 0)) 1)) (list v))) 
+ (mapcan #'(lambda (v) (when (not(= (length (gethash v (psr-hash-d p))) 1)) (list v))) 
 	      (psr-variaveis-todas p)))
 
 
@@ -65,31 +67,31 @@
 ;;; psr-variavel-dominio: PSR x variavel -> dominio
 (defun psr-variavel-dominio (p v)
   "Devolve o dominio associado a uma variavel."
-  (elt (gethash v (psr-pares p)) 0))
+  (gethash v (psr-hash-d p)))
 
 
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 (defun psr-variavel-restricoes (p v)
   "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
-  (elt (gethash v (psr-pares p)) 1))
+  (gethash v (psr-hash-r p)))
 
 
 ;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
 (defun psr-adiciona-atribuicao! (p v n)
   ""
-  (setf (elt (gethash v (psr-pares p)) 0) (list n)))
+  (setf (gethash v (psr-hash-d p)) (list n)))
 
 
 ;;; psr-remove-atribuicao!: PSR x variavel -> {}
 (defun psr-remove-atribuicao! (p v)
   ""
-  (setf (elt (gethash v (psr-pares p)) 0) nil))
+  (setf (gethash v (psr-hash-d p)) nil))
 
 
 ;;; psr-altera-dominio!: PSR x variavel x dominio {}
 (defun psr-altera-dominio! (p v d)
   ""
-  (setf (elt (gethash v (psr-pares p)) 0) d))
+  (setf (gethash v (psr-hash-d p)) d))
 
 
 ;;; psr-completo-p: PSR -> logico
@@ -207,7 +209,7 @@
   (let ((tab (make-array (list linhas colunas)))
 	(i 0))
     (dolist (v (psr-variaveis-todas p) tab)
-      (setf (aref tab (floor i colunas) (mod i colunas)) (first (elt (gethash v (psr-pares p)) 0)))
+      (setf (aref tab (floor i colunas) (mod i colunas)) (first (gethash v (psr-hash-d p))))
       (incf i))))
 
 ;;;; 2.2.2
