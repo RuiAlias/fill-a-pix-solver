@@ -72,14 +72,6 @@
 )
 
 
-(defun psr-restricoes-ambas-variaveis (p v1 v2)
-  "Devolve uma lista com todas as restricoes aplicaveis a ambas as variaveis."
-  (remove-if-not #'(lambda (l) (member v2 l :test #'equal))
-		 (psr-variavel-restricoes p v1)
-		 :key #'restricao-variaveis)
-)
-
-
 ;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
 (defun psr-adiciona-atribuicao! (p v n)
   ""
