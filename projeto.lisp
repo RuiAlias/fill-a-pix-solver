@@ -6,7 +6,8 @@
 ;;; cria-restricao: lista de variaveis x predicado -> restricao
 
 (defstruct (restricao (:constructor cria-restricao (variaveis funcao-validacao))) 
-  "Tipo restricao caracterizado por uma lista das variaveis envolvidas na restricao, e uma funcao que verifica a restricao."
+  "Tipo restricao caracterizado por uma lista das variaveis envolvidas na restricao, e uma funcao
+  que verifica a restricao."
   variaveis ; lista de variaveis
   funcao-validacao) ; predicado
 
@@ -115,13 +116,13 @@
 
 ;;; psr-consistente-p: PSR -> logico, inteiro
 (defun psr-consistente-p (p)
-  ""
+  "Testa todas as restricoes do psr."
   (psr-testa-restricoes p (psr-restricoes p)))
 
 
 ;;; psr-variavel-consistente-p: PSR x variavel -> logico, inteiro
 (defun psr-variavel-consistente-p (p v)
-  ""
+  "Testa as restricoes associadas a variavel 'v'."
   (psr-testa-restricoes p (psr-variavel-restricoes p v)))
 
 
@@ -144,8 +145,12 @@
 	(testes 0))
     (psr-adiciona-atribuicao! p v1 valor1)
     (psr-adiciona-atribuicao! p v2 valor2)
-    (setf (values consistente testes) 
-	  (psr-testa-restricoes p (psr-restricoes-ambas-variaveis p v1 v2)))
+    (dolist (r (psr-variavel-restricoes p v1))
+      (when (member v2 r :test 'equal :key #'restricao-variaveis)
+	(incf testes)
+	(when (null (funcall (restricao-funcao-validacao r) p))
+	  (setf consistente nil)
+	  (return))))
     (psr-altera-dominio! p v1 antigo-dominio1)
     (psr-altera-dominio! p v2 antigo-dominio2)
     (values consistente testes)))
