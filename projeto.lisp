@@ -70,6 +70,11 @@
   (gethash v (psr-hash-d p)))
 
 
+(defun psr-var-atribuida-p (p v)
+  "Devolve booleano que indica se a variavel esta ou nao atribuida."
+  (= (length (psr-variavel-dominio p v)) 1))
+
+
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 (defun psr-variavel-restricoes (p v)
   "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
@@ -240,3 +245,37 @@
   ""
   (multiple-value-bind (p) (procura-retrocesso-simples (fill-a-pix->psr tab))
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
+
+
+(defun n-restricoes-c-natribuidas (p v)
+  ""
+  (count-if #'(lambda (r) (some #'(lambda (v) (psr-var-atribuida-p p v))
+				(restricao-variaveis r)))
+	    (psr-variavel-restricoes p v)))
+
+
+(defun psr-var-maior-grau (p)
+  ""
+  (first (sort (psr-variaveis-nao-atribuidas p) #'> :key #'(lambda (v)
+							     (n-restricoes-c-natribuidas p v)))))
+
+
+;;; procura-retrocesso-grau: PSR -> PSR, inteiro
+(defun procura-retrocesso-grau (p)
+  ""
+  (let ((testes-total 0))
+    (if (psr-completo-p p)
+	(return-from procura-retrocesso-grau (values p testes-total))
+	(let* ((v (psr-var-maior-grau p))
+	       (d (psr-variavel-dominio p v)))
+	  (dolist (valor d)
+	    (multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
+	      (incf testes-total testes)
+	      (when consistente
+		(psr-adiciona-atribuicao! p v valor)
+		(multiple-value-bind (recurs-consistente recurs-testes) (procura-retrocesso-simples p)
+		  (incf testes-total recurs-testes)
+		  (when (not (null recurs-consistente))
+		    (return-from procura-retrocesso-grau (values p testes-total))))
+		(psr-altera-dominio! p v d))))
+	  (return-from procura-retrocesso-grau (values nil testes-total))))))
