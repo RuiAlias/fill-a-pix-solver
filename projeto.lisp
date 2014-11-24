@@ -70,7 +70,7 @@
   (gethash v (psr-hash-d p)))
 
 
-(defun psr-var-atribuida-p (p v)
+(defun psr-variavel-atribuida-p (p v)
   "Devolve booleano que indica se a variavel esta ou nao atribuida."
   (= (length (psr-variavel-dominio p v)) 1))
 
@@ -249,7 +249,7 @@
 
 (defun n-restricoes-c-natribuidas (p v)
   ""
-  (count-if #'(lambda (r) (some #'(lambda (v) (psr-var-atribuida-p p v))
+  (count-if #'(lambda (r) (some #'(lambda (v) (psr-variavel-atribuida-p p v))
 				(restricao-variaveis r)))
 	    (psr-variavel-restricoes p v)))
 
