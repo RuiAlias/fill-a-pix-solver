@@ -312,7 +312,7 @@
 (defun psr-forward-checking (p v)
   ""
   (let ((testes-total 0)
-	(inferencias (list)) ; HashTable?
+	(inferencias (make-hash-table :test 'equal))
 	(lista-arcos (arcos-vizinhos-nao-atribuidos p v)))
     (dolist (arco lista-arcos)
       (let ((v2 (first arco))
@@ -320,8 +320,8 @@
 	(multiple-value-bind (revise testes) (psr-revise p v2 v1 inferencias)
 	  (incf testes-total testes)
 	  (when revise
-	    (when (= (length (gethash v2 inferencias)) 0) ; HT?
-	      (return-from psr-forward-checking (values nil testes-total))))))) ; HT?
+	    (when (= (length (gethash v2 inferencias)) 0)
+	      (return-from psr-forward-checking (values nil testes-total)))))))
     (return-from psr-forward-checking (values inferencias testes-total))))
 
 
@@ -353,5 +353,5 @@
 		(when consistente (return nil))))
 	(setf revised t)
 	(setf novo-dominio-x (remove valor-x novo-dominio-x))))
-    (when revised 'todo) ; adicionar novo-dominio-x no conjunto de inferencias
+    (when revised (push (gethash x inferencias) novo-dominio-x))
     (values revised testes-total)))
