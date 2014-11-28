@@ -18,33 +18,36 @@
 ;;;; 2.1.2 Tipo PSR
 (defstruct psr
   "Tipo PSR (Problema de Satisfacao de Restricoes)"
-  variaveis-todas
+  variaveis-todas  ; lista com todas as variaveis por ordem
   restricoes       ; lista de restricoes
-  hash-d
-  hash-r)
+  hash-d           ; hashtable dominio (variavel->dominio)
+  hash-a           ; hatribuicoes (variavel->valor)
+  hash-r)          ; restricoes (variavel->lista de restricoes)
 
 
 ;;; cria-psr: lista variaveis x lista de dominios x lista de restricoes -> PSR
 (defun cria-psr (variaveis dominios restricoes)
   ""
   (let ((hash-d (make-hash-table :test 'equal))
+	(hash-a (make-hash-table :test 'equal))
 	(hash-r (make-hash-table :test 'equal)))
     (mapcar #'(lambda (v d) (setf (gethash v hash-d) d)) variaveis dominios)
     (dolist (r restricoes)
       (dolist (v (restricao-variaveis r) v)
 	(push r (gethash v hash-r))))
     (maphash #'(lambda (v r) (declare (ignore v)) (nreverse r)) hash-r)
-    (make-psr :variaveis-todas variaveis :restricoes restricoes :hash-d hash-d :hash-r hash-r)))
+    (make-psr :variaveis-todas variaveis
+	      :restricoes restricoes
+	      :hash-d hash-d
+	      :hash-a hash-a
+	      :hash-r hash-r)))
 
 
 ;;; psr-atribuicoes: PSR -> lista atribuicoes
 (defun psr-atribuicoes (p)
   "Retorna uma lista com todas as atribuicoes - pares (variavel . valor) - do PSR."
-  (let ((atribuicoes (list)))
-    (maphash #'(lambda (v d) (when (= (length d) 1)
-				(push (cons v (first d)) atribuicoes)))
-	     (psr-hash-d p))
-    atribuicoes))
+  (loop for variavel being the hash-keys in (psr-hash-a p) using (hash-value valor)
+     collect (cons variavel valor)))
 
 
 ;;; psr-variaveis-todas: PSR -> lista variaveis
@@ -53,15 +56,13 @@
 ;;; psr-variaveis-nao-atribuidas: PSR -> lista de variaveis
 (defun psr-variaveis-nao-atribuidas (p)
   "Devolve lista de variaveis nao atribuidas (pela ordem inicial)."
- (mapcan #'(lambda (v) (when (not(= (length (gethash v (psr-hash-d p))) 1)) (list v))) 
-	      (psr-variaveis-todas p)))
+  (loop for v in (psr-variaveis-todas p) when (not (psr-variavel-atribuida-p p v)) collect v))
 
 
 ;;; psr-variavel-valor: PSR x variavel -> objecto
 (defun psr-variavel-valor (p v)
   "Devolve o valor atribuido a variavel (caso nao exista atribuicao devolve nil)."
-  (let ((d (psr-variavel-dominio p v)))
-    (if (= 1 (length d)) (first d) nil)))
+  (nth-value 0 (gethash v (psr-hash-a p))))
 
 
 ;;; psr-variavel-dominio: PSR x variavel -> dominio
@@ -72,25 +73,25 @@
 
 (defun psr-variavel-atribuida-p (p v)
   "Devolve booleano que indica se a variavel esta ou nao atribuida."
-  (= (length (psr-variavel-dominio p v)) 1))
+  (nth-value 1 (gethash v (psr-hash-a p))))
 
 
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
 (defun psr-variavel-restricoes (p v)
   "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
-  (nth-value 0 (gethash v (psr-hash-r p)))) ; TODO: pode ser lento
+  (nth-value 0 (gethash v (psr-hash-r p))))
 
 
 ;;; psr-adiciona-atribuicao!: PSR x variavel x valor -> {}
-(defun psr-adiciona-atribuicao! (p v n)
+(defun psr-adiciona-atribuicao! (p v valor)
   ""
-  (setf (gethash v (psr-hash-d p)) (list n)))
+  (setf (gethash v (psr-hash-a p)) valor))
 
 
 ;;; psr-remove-atribuicao!: PSR x variavel -> {}
 (defun psr-remove-atribuicao! (p v)
   ""
-  (setf (gethash v (psr-hash-d p)) nil))
+  (remhash v (psr-hash-a p)))
 
 
 ;;; psr-altera-dominio!: PSR x variavel x dominio {}
@@ -130,10 +131,15 @@
 ;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
 (defun psr-atribuicao-consistente-p (p v valor)
   ""
-  (let ((antigo-dominio (psr-variavel-dominio p v)) (consistente t) (testes 0))
+  (let ((antigo-dominio (psr-variavel-dominio p v))
+	(consistente t)
+	(testes 0))
+    (when (psr-variavel-atribuida-p p v) (print "ERRO!")) ; TODO: apagar isto
+    (psr-altera-dominio! p v (list valor)) ; TODO: ainda e preciso?
     (psr-adiciona-atribuicao! p v valor)
     (setf (values consistente testes) (psr-variavel-consistente-p p v))
-    (psr-altera-dominio! p v antigo-dominio)
+    (psr-remove-atribuicao! p v)
+    (psr-altera-dominio! p v antigo-dominio) ; TODO: ainda e preceiso?
     (values consistente testes)))
 
 
@@ -144,6 +150,8 @@
 	(antigo-dominio2 (psr-variavel-dominio p v2))
 	(consistente t)
 	(testes 0))
+    (psr-altera-dominio! p v1 (list valor1)) ; TODO
+    (psr-altera-dominio! p v2 (list valor2)) ; TODO
     (psr-adiciona-atribuicao! p v1 valor1)
     (psr-adiciona-atribuicao! p v2 valor2)
     (dolist (r (psr-variavel-restricoes p v1))
@@ -152,8 +160,10 @@
 	(when (null (funcall (restricao-funcao-validacao r) p))
 	  (setf consistente nil)
 	  (return))))
-    (psr-altera-dominio! p v1 antigo-dominio1)
-    (psr-altera-dominio! p v2 antigo-dominio2)
+    (psr-remove-atribuicao! p v1)
+    (psr-remove-atribuicao! p v2)
+    (psr-altera-dominio! p v1 antigo-dominio1) ; TODO
+    (psr-altera-dominio! p v2 antigo-dominio2) ; TODO
     (values consistente testes)))
 
 
@@ -174,10 +184,7 @@
 
 (defun psr-conta-valor (p variaveis valor)
   "Devolve o numero de variaveis (do argumento) que tem como valor o 'valor'."
-  (count t (mapcar
-	    #'(lambda (v) (let ((d (psr-variavel-dominio p v)))
-				(and (= (length d) 1) (= valor (first d)))))
-	    variaveis)))
+  (count valor variaveis :key #'(lambda (v) (psr-variavel-valor p v)) :test 'eql)) ; TODO: eql vs =
 
 
 ;;; fill-a-pix->psr: array -> PSR
@@ -236,7 +243,7 @@
 		  (incf testes-total recurs-testes)
 		  (when (not (null recurs-consistente))
 		    (return-from procura-retrocesso-simples (values p testes-total))))
-		(psr-altera-dominio! p v d))))
+		(psr-remove-atribuicao! p v))))
 	  (return-from procura-retrocesso-simples (values nil testes-total))))))
 
 
