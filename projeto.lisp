@@ -132,13 +132,15 @@
 (defun psr-atribuicao-consistente-p (p v valor)
   ""
   (let ((antigo-dominio (psr-variavel-dominio p v))
+	(atribuicao (psr-variavel-valor p v))
 	(consistente t)
 	(testes 0))
-    (when (psr-variavel-atribuida-p p v) (print "ERRO!")) ; TODO: apagar isto
+
     (psr-altera-dominio! p v (list valor)) ; TODO: ainda e preciso?
     (psr-adiciona-atribuicao! p v valor)
     (setf (values consistente testes) (psr-variavel-consistente-p p v))
-    (psr-remove-atribuicao! p v)
+
+    (if atribuicao (psr-adiciona-atribuicao! p v atribuicao) (psr-remove-atribuicao! p v))
     (psr-altera-dominio! p v antigo-dominio) ; TODO: ainda e preceiso?
     (values consistente testes)))
 
@@ -148,8 +150,11 @@
   ""
   (let ((antigo-dominio1 (psr-variavel-dominio p v1))
 	(antigo-dominio2 (psr-variavel-dominio p v2))
+	(atribuicao1 (psr-variavel-valor p v1))
+	(atribuicao2 (psr-variavel-valor p v2))
 	(consistente t)
 	(testes 0))
+
     (psr-altera-dominio! p v1 (list valor1)) ; TODO
     (psr-altera-dominio! p v2 (list valor2)) ; TODO
     (psr-adiciona-atribuicao! p v1 valor1)
@@ -160,8 +165,9 @@
 	(when (null (funcall (restricao-funcao-validacao r) p))
 	  (setf consistente nil)
 	  (return))))
-    (psr-remove-atribuicao! p v1)
-    (psr-remove-atribuicao! p v2)
+
+    (if atribuicao1 (psr-adiciona-atribuicao! p v1 atribuicao1) (psr-remove-atribuicao! p v1))
+    (if atribuicao2 (psr-adiciona-atribuicao! p v2 atribuicao2) (psr-remove-atribuicao! p v2))
     (psr-altera-dominio! p v1 antigo-dominio1) ; TODO
     (psr-altera-dominio! p v2 antigo-dominio2) ; TODO
     (values consistente testes)))
@@ -254,6 +260,20 @@
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
 
 
+;;; resolve-simples: array -> array
+(defun resolve-grau (tab)
+  ""
+  (multiple-value-bind (p) (procura-retrocesso-grau (fill-a-pix->psr tab))
+    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
+
+;;; resolve-simples: array -> array
+(defun resolve-fc-mrv (tab)
+  ""
+  (multiple-value-bind (p) (procura-retrocesso-fc-mrv (fill-a-pix->psr tab))
+    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
+
+
+
 (defun n-restricoes-c-natribuidas (p v)
   ""
   (count-if #'(lambda (r) (some #'(lambda (v) (null (psr-variavel-atribuida-p p v)))
@@ -289,77 +309,168 @@
 	  (return-from procura-retrocesso-grau (values nil testes-total))))))
 
 
+(defun psr-mrv (p)
+  ""
+  (let* ((lista-vna (psr-variaveis-nao-atribuidas p))
+	 (min-v (first lista-vna))
+	 (min-length (length min-v)))
+;    (print lista-vna)
+    (dolist (v lista-vna)
+      (let ((d-length (length (psr-variavel-dominio p v))))
+	(when (< d-length min-length)
+	  (setf min-length d-length)
+	  (setf min-v v))))
+
+    min-v))
+
+
 ;;; procura-retrocesso-fc-mrv: PSR -> PSR, inteiro
 (defun procura-retrocesso-fc-mrv (p)
   ""
-  (let ((testes-total 0))
-    (if (psr-completo-p p)
-	(return-from procura-retrocesso-fc-mrv (values p testes-total))
-	(let* ((v (psr-mrv p))
-	       (d (psr-variavel-dominio p v)))
-	  (dolist (valor d)
-	    (multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
-	      (incf testes-total testes)
-	      (when consistente
-		(psr-adiciona-atribuicao! p v valor)
-		(multiple-value-bind (inferencias inf-testes) (psr-forward-checking p v)
-		  (incf testes-total inf-testes)
-		  (when inferencias
-		    ; adiciona inferencias ao psr
-		    (multiple-value-bind (recurs-consistente recurs-testes)
-			(procura-retrocesso-fc-mrv p)
-		      (incf testes-total recurs-testes)
-		      (when recurs-consistente
-			(return-from procura-retrocesso-fc-mrv (values p testes-total))))
-		    ; remove infrerencias do psr
-		    ))
-		(psr-altera-dominio! p v d))))
-	  (return-from procura-retrocesso-fc-mrv (values nil testes-total))))))
+  (let ((testes-totais 0))
+    (when (psr-completo-p p) (return-from procura-retrocesso-fc-mrv (values p testes-totais)))
+
+    (let* ((v (psr-mrv p))
+;	   (d (psr-variavel-dominio p v))
+	   )
+;      (format t "Vou experimentar a variavel:~a~%" v)
+      (dolist (valor (psr-variavel-dominio p v))
+	(multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
+	  (incf testes-totais testes)
+	  (when consistente
+;	    (format t "Atribuindo o valor:~a a variavel:~a~%" valor v)
+	    (psr-adiciona-atribuicao! p v valor)
+;	    (print "Depois da atribuicao")
+;	    (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+	    (multiple-value-bind (inferencias testes) (psr-forward-checking p v)
+;	      (format t "PR: inferencias:~a~%" inferencias)
+	      (incf testes-totais testes)
+	      (when inferencias ; teste suficiente?
+		(let ((backup (make-hash-table :test 'equal)))
+		  (maphash #'(lambda (iv id)
+;			       (format t "iv:~a id:~a~%" iv id)
+			       (setf (gethash iv backup) (psr-variavel-dominio p iv))
+			       (psr-altera-dominio! p iv id))
+			   inferencias)
+
+;		  (print "Depois das inferencias")
+;		  (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+		  (multiple-value-bind (resultado testes) (procura-retrocesso-fc-mrv p)
+		    (incf testes-totais testes)
+		    (when resultado
+		      (return-from procura-retrocesso-fc-mrv (values resultado testes-totais))))
+
+		  (maphash #'(lambda (bv bd)
+			       (psr-altera-dominio! p bv bd)
+			       (psr-remove-atribuicao! p bv))
+			   backup)
+;		  (print "Removidas as inferencias:")
+;		  (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+		  ))
+
+	      (psr-remove-atribuicao! p v)
+;	      (print "Removendo a atribuicao:")
+;	      (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+	      )))))
+
+    (return-from procura-retrocesso-fc-mrv (values nil testes-totais))))
 
 
 (defun psr-forward-checking (p v)
   ""
-  (let ((testes-total 0)
+  (let ((testes-totais 0)
 	(inferencias (make-hash-table :test 'equal))
-	(lista-arcos (arcos-vizinhos-nao-atribuidos p v)))
+	(lista-arcos (psr-arcos-vizinhos-nao-atribuidos2 p v)))
+;    (format t "FC arcos:~a~%" lista-arcos)
     (dolist (arco lista-arcos)
       (let ((v2 (first arco))
-	    (v1 (second arco)))
-	(multiple-value-bind (revise testes) (psr-revise p v2 v1 inferencias)
-	  (incf testes-total testes)
+	    (v1 (rest arco)))
+
+	(multiple-value-bind (revise testes) (psr-revise2 p v2 v1 inferencias)
+;	  (when (equal v2 "(6 . 6)") (format t "v2:~a v1:~a~%inferencias:~a~%" v2 v1 inferencias))
+	  (incf testes-totais testes)
 	  (when revise
-	    (when (= (length (gethash v2 inferencias)) 0)
-	      (return-from psr-forward-checking (values nil testes-total)))))))
-    (return-from psr-forward-checking (values inferencias testes-total))))
+	    (multiple-value-bind (d exists) (gethash v2 inferencias)
+	      (when exists
+		(when (= (length d) 0)
+		  (return-from psr-forward-checking (values nil testes-totais)))))))))
+
+    (return-from psr-forward-checking (values inferencias testes-totais))))
 
 
-(defun arcos-vizinhos-nao-atribuidos (p v)
+;(defun psr-arcos-vizinhos-nao-atribuidos (p v)
+;  ""
+;  (let ((lista-arcos (list))) ; lista vs vector?
+;    (dolist (v-na (psr-variaveis-nao-atribuidas p))
+;      (when (not (equal v v-na))
+;	(when (some #'(lambda (r) (find r (psr-variavel-restricoes p v-na)))
+;		    (psr-variavel-restricoes p v))
+;	  (push (cons v-na v) lista-arcos))))
+;    (nreverse lista-arcos)))
+
+
+(defun psr-arcos-vizinhos-nao-atribuidos2 (p v)
   ""
-  (let ((lista-arcos (list))) ; lista vs vector?
+  (let ((lista-arcos (list))
+	(envolvidas (remove-duplicates (reduce #'append (psr-variavel-restricoes p v) :key 'restricao-variaveis) :test 'equal)))
+;    (format t "A variavel ~a tem estas restricoes:~a~%" v (psr-variavel-restricoes p v))
+;    (format t "PAVNA: v:~a~%restricoes:~a~%envolvidas:~a~%" v (psr-variavel-restricoes p v) envolvidas)
     (dolist (v-na (psr-variaveis-nao-atribuidas p))
       (when (not (equal v v-na))
-	(when (some #'(lambda (r) (find r (psr-variavel-restricoes p v-na)))
-		    (psr-variavel-restricoes p v))
+	(when (find v-na envolvidas :test 'equal)
 	  (push (cons v-na v) lista-arcos))))
+
     (nreverse lista-arcos)))
 
 
-(defun psr-revise (p x y inferencias)
+;; (defun psr-revise (p x y inferencias)
+;;   ""
+;;   (let* ((testes-total 0)
+;; 	 (revised nil)
+;; 	 (dominio-x (gethash x inferencias (psr-variavel-dominio p x)))
+;; 	 (novo-dominio-x dominio-x)
+;; 	 (dominio-y (if (psr-variavel-atribuida-p p y)
+;; 			(psr-variavel-dominio p y)
+;; 			(gethash y inferencias (psr-variavel-dominio p y)))))
+
+;;     (dolist (valor-x dominio-x)
+;;       (when (dolist (valor-y dominio-y t)
+;; 	      (multiple-value-bind (consistente testes)
+;; 		  (psr-atribuicoes-consistentes-arco-p p x valor-x y valor-y)
+;; 		(incf testes-total testes)
+;; 		(when consistente (return nil))))
+;; 	(setf revised t)
+;; 	(setf novo-dominio-x (remove valor-x novo-dominio-x))))
+
+;;     (when revised
+;;       (setf (gethash x inferencias) novo-dominio-x)) ; TODO: sobrepor?
+
+;;     (values revised testes-total)))
+
+
+(defun psr-revise2 (p x y inferencias)
   ""
-  (let* ((testes-total 0)
+  (let* ((testes-totais 0)
 	 (revised nil)
 	 (dominio-x (gethash x inferencias (psr-variavel-dominio p x)))
 	 (novo-dominio-x dominio-x)
 	 (dominio-y (if (psr-variavel-atribuida-p p y)
-			(psr-variavel-dominio p y)
+			(list (psr-variavel-valor p y))
 			(gethash y inferencias (psr-variavel-dominio p y)))))
+
     (dolist (valor-x dominio-x)
-      (when (dolist (valor-y dominio-y t)
-	      (multiple-value-bind (consistente testes)
-		  (psr-atribuicoes-consistentes-arco-p p x valor-x y valor-y)
-		(incf testes-total testes)
-		(when consistente (return nil))))
-	(setf revised t)
-	(setf novo-dominio-x (remove valor-x novo-dominio-x))))
-    (when revised (push (gethash x inferencias) novo-dominio-x))
-    (values revised testes-total)))
+      (let ((found-consistent-value nil))
+	(dolist (valor-y dominio-y)
+	  (multiple-value-bind (consistente testes) (psr-atribuicoes-consistentes-arco-p p x valor-x y valor-y)
+	    (incf testes-totais testes)
+	    (when consistente
+	      (setf found-consistent-value t)
+	      (return))))
+	(when (null found-consistent-value)
+	  (setf revised t)
+	  (setf novo-dominio-x (remove valor-x novo-dominio-x)))))
+
+    (when revised
+      (setf (gethash x inferencias) novo-dominio-x))
+
+    (values revised testes-totais)))
