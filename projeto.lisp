@@ -274,16 +274,22 @@
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
 
 
+(defparameter LC 5)
+(defparameter DEBUG t)
+
 
 (defun n-restricoes-c-natribuidas (p v)
   ""
-  (count-if #'(lambda (r) (some #'(lambda (v) (null (psr-variavel-atribuida-p p v)))
+  (count-if #'(lambda (r) (some #'(lambda (v1) (and (not (equal v1 v))
+						    (null (psr-variavel-atribuida-p p v1))))
 				(restricao-variaveis r)))
 	    (psr-variavel-restricoes p v)))
 
 
 (defun psr-var-maior-grau (p)
   ""
+;  (dolist (v (sort (psr-variaveis-nao-atribuidas p) #'> :key #'(lambda (v) (n-restricoes-c-natribuidas p v))))
+;    (format DEBUG "GRAU: v:~a grau:~a~%" v (n-restricoes-c-natribuidas p v)))
   (first (sort (psr-variaveis-nao-atribuidas p)
 	       #'>
 	       :key #'(lambda (v) (n-restricoes-c-natribuidas p v)))))
@@ -298,16 +304,31 @@
 	(let* ((v (psr-var-maior-grau p))
 	       (d (psr-variavel-dominio p v)))
 
+;	  (when DEBUG (format t "Escolhi a variavel:~a cujo dominio e:~a~%" v (psr-variavel-dominio p v)))
 	  (dolist (valor d)
 	    (multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
 	      (incf testes-total testes)
+;	      (when DEBUG (format t "Fiz ~a testes de consistencia. O total vai em:~a~%" testes testes-total))
 	      (when consistente
+;		(when DEBUG (format t "Atribuindo o valor:~a a variavel:~a~%" valor v))
 		(psr-adiciona-atribuicao! p v valor)
+
+;		(when DEBUG
+;		  (format DEBUG "Depois da atribuicao~%")
+;		  (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+
 		(multiple-value-bind (recurs-consistente recurs-testes) (procura-retrocesso-grau p)
 		  (incf testes-total recurs-testes)
+;		  (when DEBUG
+;		    (format t "Somando os ~a desta iteracao com os ~a que vem de tras fica:~a~%" testes recurs-testes testes-total))
 		  (when (not (null recurs-consistente))
 		    (return-from procura-retrocesso-grau (values p testes-total))))
-		(psr-remove-atribuicao! p v))))
+
+		(psr-remove-atribuicao! p v)
+;		(when DEBUG
+;		  (print "Removendo a atribuicao:")
+;		  (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+		)))
 	  (return-from procura-retrocesso-grau (values nil testes-total))))))
 
 
@@ -325,8 +346,6 @@
 
     min-v))
 
-(defparameter LC 10)
-(defparameter DEBUG t)
 
 ;;; procura-retrocesso-fc-mrv: PSR -> PSR, inteiro
 (defun procura-retrocesso-fc-mrv (p)
