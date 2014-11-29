@@ -275,6 +275,13 @@
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
 
 
+;;; resolve-simples: array -> array
+(defun resolve-mac-mrv (tab)
+  ""
+  (multiple-value-bind (p) (procura-retrocesso-mac-mrv (fill-a-pix->psr tab))
+    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
+
+
 
 (defun n-restricoes-c-natribuidas (p v)
   ""
@@ -487,3 +494,86 @@
       (setf (gethash x inferencias) novo-dominio-x))
 
     (values revised testes-totais)))
+
+
+;;; procura-retrocesso-mac-mrv: PSR -> PSR, inteiro
+(defun procura-retrocesso-mac-mrv (p)
+  ""
+  (let ((testes-totais 0))
+    (when (psr-completo-p p) (return-from procura-retrocesso-mac-mrv (values p testes-totais)))
+
+    (let* ((v (psr-mrv p))
+;	   (d (psr-variavel-dominio p v))
+	   )
+;      (when DEBUG (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" v (psr-variavel-dominio p v)))
+      (dolist (valor (psr-variavel-dominio p v))
+	(multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
+	  (incf testes-totais testes)
+	  (when consistente
+;	    (when DEBUG (format t "Atribuindo o valor:~a a variavel:~a~%" valor v))
+	    (psr-adiciona-atribuicao! p v valor)
+
+;	    (when DEBUG
+;	      (format DEBUG "Depois da atribuicao~%")
+;	      (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+	    (multiple-value-bind (inferencias testes) (psr-mac p v)
+;	      (when DEBUG (format t "PR: inferencias:~a~%" inferencias))
+	      (incf testes-totais testes)
+	      (when inferencias ; teste suficiente?
+		(let ((backup (make-hash-table :test 'equal)))
+		  (maphash #'(lambda (iv id)
+;			       (when DEBUG (format t "iv:~a id:~a~%" iv id))
+			       (setf (gethash iv backup) (psr-variavel-dominio p iv))
+			       (psr-altera-dominio! p iv id))
+			   inferencias)
+
+;		  (when DEBUG
+;		    (format DEBUG "Depois das inferencias~%")
+;		    (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+
+		  (multiple-value-bind (resultado testes) (procura-retrocesso-mac-mrv p)
+		    (incf testes-totais testes)
+		    (when resultado
+		      (return-from procura-retrocesso-mac-mrv (values resultado testes-totais))))
+
+		  (maphash #'(lambda (bv bd)
+			       (psr-altera-dominio! p bv bd))
+			   backup)
+;		  (when DEBUG
+;		    (print "Removidas as inferencias:")
+;		    (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+		  ))
+
+	      (psr-remove-atribuicao! p v)
+;	      (when DEBUG
+;		(print "Removendo a atribuicao:")
+;		(desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+	      )))))
+
+    (return-from procura-retrocesso-mac-mrv (values nil testes-totais))))
+
+
+(defun psr-mac (p v)
+  ""
+  (let ((testes-totais 0)
+	(inferencias (make-hash-table :test 'equal))
+	(lista-arcos (psr-arcos-vizinhos-nao-atribuidos2 p v)))
+;    (format t "FC arcos:~a~%" lista-arcos)
+    (dolist (arco lista-arcos)
+      (let ((v2 (first arco))
+	    (v1 (rest arco)))
+
+	(multiple-value-bind (revise testes) (psr-revise2 p v2 v1 inferencias)
+;	  (when (equal v2 "(6 . 6)") (format t "v2:~a v1:~a~%inferencias:~a~%" v2 v1 inferencias))
+	  (incf testes-totais testes)
+	  (when revise
+	    (multiple-value-bind (d exists) (gethash v2 inferencias)
+	      (when exists
+		(when (= (length d) 0)
+		  (return-from psr-mac (values nil testes-totais)))))
+
+	    (nconc lista-arcos (remove arco
+				       (psr-arcos-vizinhos-nao-atribuidos2 p v2)
+				       :test 'equal))))))
+
+    (return-from psr-mac (values inferencias testes-totais))))
