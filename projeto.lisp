@@ -305,7 +305,7 @@
 		  (incf testes-total recurs-testes)
 		  (when (not (null recurs-consistente))
 		    (return-from procura-retrocesso-grau (values p testes-total))))
-		(psr-altera-dominio! p v d))))
+		(psr-remove-atribuicao! p v))))
 	  (return-from procura-retrocesso-grau (values nil testes-total))))))
 
 
