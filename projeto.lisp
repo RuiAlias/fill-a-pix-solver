@@ -583,7 +583,7 @@
 		(when (= (length d) 0)
 		  (return-from psr-mac (values nil testes-totais)))))
 
-	    (nconc lista-arcos (remove arco
+	    (nconc lista-arcos (remove (cons v1 v2)
 				       (psr-arcos-vizinhos-nao-atribuidos2 p v2)
 				       :test 'equal))))))
 
