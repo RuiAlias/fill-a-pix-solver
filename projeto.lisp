@@ -68,12 +68,14 @@
 ;;; psr-variavel-dominio: PSR x variavel -> dominio
 (defun psr-variavel-dominio (p v)
   "Devolve o dominio associado a uma variavel."
-  (nth-value 0 (gethash v (psr-hash-d p))))
+  (if (psr-variavel-atribuida-p p v)
+      (list (psr-variavel-valor p v))
+      (nth-value 0 (gethash v (psr-hash-d p)))))
 
 
 (defun psr-variavel-atribuida-p (p v)
   "Devolve booleano que indica se a variavel esta ou nao atribuida."
-  (nth-value 1 (gethash v (psr-hash-a p))))
+  (psr-variavel-valor p v))
 
 
 ;;; psr-variavel-restricoes: PSR x variavel -> lista restricoes
@@ -135,13 +137,12 @@
 	(atribuicao (psr-variavel-valor p v))
 	(consistente t)
 	(testes 0))
+    (when (and (numberp atribuicao) (not (= atribuicao valor))) (format t "AC: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio atribuicao valor))
 
-    (psr-altera-dominio! p v (list valor)) ; TODO: ainda e preciso?
     (psr-adiciona-atribuicao! p v valor)
     (setf (values consistente testes) (psr-variavel-consistente-p p v))
 
-    (if atribuicao (psr-adiciona-atribuicao! p v atribuicao) (psr-remove-atribuicao! p v))
-    (psr-altera-dominio! p v antigo-dominio) ; TODO: ainda e preceiso?
+    (when (null atribuicao) (psr-remove-atribuicao! p v))
     (values consistente testes)))
 
 
@@ -154,9 +155,11 @@
 	(atribuicao2 (psr-variavel-valor p v2))
 	(consistente t)
 	(testes 0))
+    (when (and (numberp atribuicao1) (not (= atribuicao1 valor1)))
+      (format t "ACA-1: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio1 atribuicao1 valor1))
+    (when (and (numberp atribuicao2) (not (= atribuicao2 valor2)))
+      (format t "ACA-2: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio2 atribuicao2 valor2))
 
-    (psr-altera-dominio! p v1 (list valor1)) ; TODO
-    (psr-altera-dominio! p v2 (list valor2)) ; TODO
     (psr-adiciona-atribuicao! p v1 valor1)
     (psr-adiciona-atribuicao! p v2 valor2)
     (dolist (r (psr-variavel-restricoes p v1))
@@ -166,10 +169,8 @@
 	  (setf consistente nil)
 	  (return))))
 
-    (if atribuicao1 (psr-adiciona-atribuicao! p v1 atribuicao1) (psr-remove-atribuicao! p v1))
-    (if atribuicao2 (psr-adiciona-atribuicao! p v2 atribuicao2) (psr-remove-atribuicao! p v2))
-    (psr-altera-dominio! p v1 antigo-dominio1) ; TODO
-    (psr-altera-dominio! p v2 antigo-dominio2) ; TODO
+    (when (null atribuicao1) (psr-remove-atribuicao! p v1))
+    (when (null atribuicao2) (psr-remove-atribuicao! p v2))
     (values consistente testes)))
 
 
@@ -240,6 +241,7 @@
 	(return-from procura-retrocesso-simples (values p testes-total))
 	(let* ((v (first (psr-variaveis-nao-atribuidas p)))
 	       (d (psr-variavel-dominio p v)))
+;	  (format t "v:~a d:~a~%" v d)
 	  (dolist (valor d)
 	    (multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
 	      (incf testes-total testes)
@@ -283,8 +285,9 @@
 
 (defun psr-var-maior-grau (p)
   ""
-  (first (sort (psr-variaveis-nao-atribuidas p) #'> :key #'(lambda (v)
-							     (n-restricoes-c-natribuidas p v)))))
+  (first (sort (psr-variaveis-nao-atribuidas p)
+	       #'>
+	       :key #'(lambda (v) (n-restricoes-c-natribuidas p v)))))
 
 
 ;;; procura-retrocesso-grau: PSR -> PSR, inteiro
@@ -323,6 +326,8 @@
 
     min-v))
 
+(defparameter LC 10)
+(defparameter DEBUG t)
 
 ;;; procura-retrocesso-fc-mrv: PSR -> PSR, inteiro
 (defun procura-retrocesso-fc-mrv (p)
@@ -333,44 +338,49 @@
     (let* ((v (psr-mrv p))
 ;	   (d (psr-variavel-dominio p v))
 	   )
-;      (format t "Vou experimentar a variavel:~a~%" v)
+;      (when DEBUG (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" v (psr-variavel-dominio p v)))
       (dolist (valor (psr-variavel-dominio p v))
 	(multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
 	  (incf testes-totais testes)
 	  (when consistente
-;	    (format t "Atribuindo o valor:~a a variavel:~a~%" valor v)
+;	    (when DEBUG (format t "Atribuindo o valor:~a a variavel:~a~%" valor v))
 	    (psr-adiciona-atribuicao! p v valor)
-;	    (print "Depois da atribuicao")
-;	    (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+
+;	    (when DEBUG
+;	      (format DEBUG "Depois da atribuicao~%")
+;	      (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
 	    (multiple-value-bind (inferencias testes) (psr-forward-checking p v)
-;	      (format t "PR: inferencias:~a~%" inferencias)
+;	      (when DEBUG (format t "PR: inferencias:~a~%" inferencias))
 	      (incf testes-totais testes)
 	      (when inferencias ; teste suficiente?
 		(let ((backup (make-hash-table :test 'equal)))
 		  (maphash #'(lambda (iv id)
-;			       (format t "iv:~a id:~a~%" iv id)
+;			       (when DEBUG (format t "iv:~a id:~a~%" iv id))
 			       (setf (gethash iv backup) (psr-variavel-dominio p iv))
 			       (psr-altera-dominio! p iv id))
 			   inferencias)
 
-;		  (print "Depois das inferencias")
-;		  (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+;		  (when DEBUG
+;		    (format DEBUG "Depois das inferencias~%")
+;		    (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
+
 		  (multiple-value-bind (resultado testes) (procura-retrocesso-fc-mrv p)
 		    (incf testes-totais testes)
 		    (when resultado
 		      (return-from procura-retrocesso-fc-mrv (values resultado testes-totais))))
 
 		  (maphash #'(lambda (bv bd)
-			       (psr-altera-dominio! p bv bd)
-			       (psr-remove-atribuicao! p bv))
+			       (psr-altera-dominio! p bv bd))
 			   backup)
-;		  (print "Removidas as inferencias:")
-;		  (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+;		  (when DEBUG
+;		    (print "Removidas as inferencias:")
+;		    (desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
 		  ))
 
 	      (psr-remove-atribuicao! p v)
-;	      (print "Removendo a atribuicao:")
-;	      (desenha-fill-a-pix (psr->fill-a-pix p 10 10))
+;	      (when DEBUG
+;		(print "Removendo a atribuicao:")
+;		(desenha-fill-a-pix (psr->fill-a-pix p LC LC)))
 	      )))))
 
     (return-from procura-retrocesso-fc-mrv (values nil testes-totais))))
@@ -412,9 +422,12 @@
 (defun psr-arcos-vizinhos-nao-atribuidos2 (p v)
   ""
   (let ((lista-arcos (list))
-	(envolvidas (remove-duplicates (reduce #'append (psr-variavel-restricoes p v) :key 'restricao-variaveis) :test 'equal)))
+	(envolvidas (remove-duplicates (reduce #'append (psr-variavel-restricoes p v) ; TODO: rever
+					       :key 'restricao-variaveis)
+				       :test 'equal)))
 ;    (format t "A variavel ~a tem estas restricoes:~a~%" v (psr-variavel-restricoes p v))
 ;    (format t "PAVNA: v:~a~%restricoes:~a~%envolvidas:~a~%" v (psr-variavel-restricoes p v) envolvidas)
+;    (format t "PAVNA: var-natribuidas:~a~%" (psr-variaveis-nao-atribuidas p))
     (dolist (v-na (psr-variaveis-nao-atribuidas p))
       (when (not (equal v v-na))
 	(when (find v-na envolvidas :test 'equal)
