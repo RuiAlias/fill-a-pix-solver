@@ -31,11 +31,20 @@
 
 ;; desenha-linha: array --> {}
 ;;; recebe um array fill-a-pix e desenha uma das linhas do array no ecra
+;(defun desenha-linha (linha tabuleiro)
+;	(format T "| ")
+;	(dotimes (coluna (array-dimension tabuleiro 0))
+;		(format T "~A " (if (zerop (aref tabuleiro linha coluna)) " " *caracter*)))
+;	(format T "|~%"))
+
 (defun desenha-linha (linha tabuleiro)
 	(format T "| ")
 	(dotimes (coluna (array-dimension tabuleiro 0))
-		(format T "~A " (if (zerop (aref tabuleiro linha coluna)) " " *caracter*)))
+		(format T "~A " (cond ((null (aref tabuleiro linha coluna)) "?")
+				      ((zerop (aref tabuleiro linha coluna)) " ")
+				      (t *caracter*))))
 	(format T "|~%"))
+
 
 ;;caso mais simples possivel, uma unica restricao de que tem de ser tudo preto a volta da casa central
 (defparameter e0 (make-array (list 3 3) :initial-contents
