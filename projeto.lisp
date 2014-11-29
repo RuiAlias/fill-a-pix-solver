@@ -133,32 +133,24 @@
 ;;; psr-atribuicao-consistente-p: PSR x variavel x valor -> logico, inteiro
 (defun psr-atribuicao-consistente-p (p v valor)
   ""
-  (let ((antigo-dominio (psr-variavel-dominio p v))
-	(atribuicao (psr-variavel-valor p v))
+  (let ((atribuicao (psr-variavel-valor p v))
 	(consistente t)
 	(testes 0))
-    (when (and (numberp atribuicao) (not (= atribuicao valor))) (format t "AC: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio atribuicao valor))
 
     (psr-adiciona-atribuicao! p v valor)
     (setf (values consistente testes) (psr-variavel-consistente-p p v))
 
-    (when (null atribuicao) (psr-remove-atribuicao! p v))
+    (if atribuicao (psr-adiciona-atribuicao! p v atribuicao) (psr-remove-atribuicao! p v))
     (values consistente testes)))
 
 
 ;;; psr-atribuicoes-consistentes-arco-p: PSR x variavel x valor x variavel x valor -> logico, inteiro
 (defun psr-atribuicoes-consistentes-arco-p (p v1 valor1 v2 valor2)
   ""
-  (let ((antigo-dominio1 (psr-variavel-dominio p v1))
-	(antigo-dominio2 (psr-variavel-dominio p v2))
-	(atribuicao1 (psr-variavel-valor p v1))
+  (let ((atribuicao1 (psr-variavel-valor p v1))
 	(atribuicao2 (psr-variavel-valor p v2))
 	(consistente t)
 	(testes 0))
-    (when (and (numberp atribuicao1) (not (= atribuicao1 valor1)))
-      (format t "ACA-1: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio1 atribuicao1 valor1))
-    (when (and (numberp atribuicao2) (not (= atribuicao2 valor2)))
-      (format t "ACA-2: dominio:~a atribuicao:~a valor:~a~%" antigo-dominio2 atribuicao2 valor2))
 
     (psr-adiciona-atribuicao! p v1 valor1)
     (psr-adiciona-atribuicao! p v2 valor2)
@@ -169,8 +161,8 @@
 	  (setf consistente nil)
 	  (return))))
 
-    (when (null atribuicao1) (psr-remove-atribuicao! p v1))
-    (when (null atribuicao2) (psr-remove-atribuicao! p v2))
+    (if atribuicao1 (psr-adiciona-atribuicao! p v1 atribuicao1) (psr-remove-atribuicao! p v1))
+    (if atribuicao2 (psr-adiciona-atribuicao! p v2 atribuicao2) (psr-remove-atribuicao! p v2))
     (values consistente testes)))
 
 
@@ -577,3 +569,9 @@
 				       :test 'equal))))))
 
     (return-from psr-mac (values inferencias testes-totais))))
+
+
+(defun resolve-best (tab)
+  ""
+  (multiple-value-bind (p) (procura-retrocesso-fc-mrv (fill-a-pix->psr tab))
+    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))

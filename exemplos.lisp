@@ -4,7 +4,7 @@
 (defun ignore-value (x)
 	(declare (ignore x))
 	'ignore)
-	
+
 (defun conjuntos-iguais-p (l1 l2 &key (test #'equal))
 	(and (null (set-difference l1 l2 :test test))
 		 (null (set-difference l2 l1 :test test))))
@@ -19,7 +19,7 @@
 	(dotimes (linha (array-dimension tabuleiro 0))
 		(desenha-linha linha tabuleiro))
 	(desenha-linha-exterior tabuleiro))
-	
+
 ;;; desenha-linha-exterior: array --> {}
 ;;; recebe um array fill-a-pix e desenha uma linha exterior do array (pode ser a linha superior ou inferior)
 ;;; com o tamanho correspondente ao tamanho do array.
@@ -28,7 +28,7 @@
 	(dotimes (coluna (array-dimension tabuleiro 0))
 		(format T "--"))
 	(format T "+~%"))
-	
+
 ;; desenha-linha: array --> {}
 ;;; recebe um array fill-a-pix e desenha uma das linhas do array no ecra
 (defun desenha-linha (linha tabuleiro)
@@ -38,10 +38,15 @@
 	(format T "|~%"))
 
 ;;caso mais simples possivel, uma unica restricao de que tem de ser tudo preto a volta da casa central
-(defparameter e0 (make-array (list 3 3) :initial-contents 
+(defparameter e0 (make-array (list 3 3) :initial-contents
 	'((NIL NIL NIL)
 	  (NIL 9 NIL)
 	  (NIL NIL NIL))))
+
+(defparameter e0_1 (make-array (list 3 3) :initial-contents
+	'((1 NIL 0)
+	  (NIL NIL NIL)
+	  (0 NIL 0))))
 
 ;;este exemplo tem multiplas solucoes possiveis
 (defparameter e1 (make-array (list 5 5) :initial-contents
@@ -51,14 +56,21 @@
 	  (NIL 4 NIL 5 NIL)
 	  (NIL NIL 4 NIL NIL)
 	  )))
-	 
-	  
+
+
 (defparameter e1_1 (make-array (list 5 5) :initial-contents
 	'((NIL NIL 1 NIL NIL)
 	  (NIL 1 NIL NIL 5)
 	  (1 NIL NIL NIL 6)
 	  (NIL NIL NIL 9 NIL)
 	  (NIL 5 6 NIL NIL))))
+
+(defparameter e1_2(make-array (list 5 5) :initial-contents
+	'((0 NIL 2 NIL 0)
+	  (NIL NIL NIL NIL NIL)
+	  (2 NIL 5 NIL 2)
+	  (NIL NIL NIL NIL NIL)
+	  (0 NIL 2 NIL 0))))
 
 ;; os exemplos seguintes foram retirados dos seguintes sitios:
 ;; http://www.conceptispuzzles.com/index.aspx?uri=puzzle/fill-a-pix
