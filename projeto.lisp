@@ -336,8 +336,8 @@
   ""
   (let* ((lista-vna (psr-variaveis-nao-atribuidas p))
 	 (min-v (first lista-vna))
-	 (min-length (length min-v)))
-;    (print lista-vna)
+	 (min-length (length (psr-variavel-dominio p min-v))))
+
     (dolist (v lista-vna)
       (let ((d-length (length (psr-variavel-dominio p v))))
 	(when (< d-length min-length)
