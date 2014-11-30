@@ -589,7 +589,7 @@
     (return-from psr-mac (values inferencias testes-totais))))
 
 
-(defun resolve-best (tab)
-  ""
-  (multiple-value-bind (p) (procura-retrocesso-fc-mrv (fill-a-pix->psr tab))
-    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
+;(defun resolve-best (tab)
+;  ""
+;  (multiple-value-bind (p) (procura-retrocesso-fc-mrv (fill-a-pix->psr tab))
+;    (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
