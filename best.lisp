@@ -308,37 +308,8 @@
 
 (defun fapix-arcos-vizinhos-nao-atribuidos (f ipix)
   ""
-  (let ((lista-arcos (list)))
-    (dolist (relacionado (aref (fapix-relacionados f) ipix))
-      (when (not (fapix-pix-cor f relacionado))
-	(push (cons relacionado ipix) lista-arcos)))
-
-    (nreverse lista-arcos)))
-
-
-;; (defun psr-revise (p x y inferencias)
-;;   ""
-;;   (let* ((testes-total 0)
-;; 	 (revised nil)
-;; 	 (dominio-x (gethash x inferencias (psr-variavel-dominio p x)))
-;; 	 (novo-dominio-x dominio-x)
-;; 	 (dominio-y (if (psr-variavel-atribuida-p p y)
-;; 			(psr-variavel-dominio p y)
-;; 			(gethash y inferencias (psr-variavel-dominio p y)))))
-
-;;     (dolist (valor-x dominio-x)
-;;       (when (dolist (valor-y dominio-y t)
-;; 	      (multiple-value-bind (consistente testes)
-;; 		  (psr-atribuicoes-consistentes-arco-p p x valor-x y valor-y)
-;; 		(incf testes-total testes)
-;; 		(when consistente (return nil))))
-;; 	(setf revised t)
-;; 	(setf novo-dominio-x (remove valor-x novo-dominio-x))))
-
-;;     (when revised
-;;       (setf (gethash x inferencias) novo-dominio-x)) ; TODO: sobrepor?
-
-;;     (values revised testes-total)))
+  (loop for relacionado in (aref (fapix-relacionados f) ipix) unless (fapix-pix-cor f relacionado)
+       collect (cons relacionado ipix)))
 
 
 (defun fapix-revise (f x y inferencias)
@@ -352,18 +323,16 @@
 			(gethash y inferencias (fapix-pix-dominio f y)))))
 
     (dolist (valor-x dominio-x)
-      (let ((found-consistent-value nil))
-	(dolist (valor-y dominio-y)
-	  (multiple-value-bind (consistente testes) (fapix-atribuicoes-consistentes-arco-p f x valor-x y valor-y)
-	    (incf testes-totais testes)
-	    (when consistente
-	      (setf found-consistent-value t)
-	      (return))))
-	(when (null found-consistent-value)
-	  (setf revised t)
-	  (setf novo-dominio-x (remove valor-x novo-dominio-x)))))
+      (when (dolist (valor-y dominio-y t)
+	      (multiple-value-bind (consistente testes)
+		  (fapix-atribuicoes-consistentes-arco-p f x valor-x y valor-y)
+		(incf testes-totais testes)
+		(when consistente (return nil))))
+
+	(setf revised t)
+	(setf novo-dominio-x (remove valor-x novo-dominio-x))))
 
     (when revised
-      (setf (gethash x inferencias) novo-dominio-x))
+      (setf (gethash x inferencias) novo-dominio-x)) ; TODO: sobrepor?
 
     (values revised testes-totais)))
