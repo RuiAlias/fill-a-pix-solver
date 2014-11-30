@@ -569,13 +569,12 @@
   (let ((testes-totais 0)
 	(inferencias (make-hash-table :test 'equal))
 	(lista-arcos (psr-arcos-vizinhos-nao-atribuidos2 p v)))
-;    (format t "FC arcos:~a~%" lista-arcos)
+
     (dolist (arco lista-arcos)
       (let ((v2 (first arco))
 	    (v1 (rest arco)))
 
 	(multiple-value-bind (revise testes) (psr-revise2 p v2 v1 inferencias)
-;	  (when (equal v2 "(6 . 6)") (format t "v2:~a v1:~a~%inferencias:~a~%" v2 v1 inferencias))
 	  (incf testes-totais testes)
 	  (when revise
 	    (multiple-value-bind (d exists) (gethash v2 inferencias)
