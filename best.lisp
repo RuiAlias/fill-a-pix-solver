@@ -19,7 +19,9 @@
   relacionados
   natribuidos
   solucionavel
-  dominio-len)
+  dominio-len
+  pix
+  hv)
 
 
 (defun cria-restricao-fapix (ipixs pix a-volta-len)
@@ -158,6 +160,8 @@
 	 (pix-solucionavel t) ; t de talvez :D
 	 (dominio-len (make-array 3 :initial-element nil))
 	 (pix-dominio-len-p (make-array max-ipix :initial-element nil))
+	 (pix-pix (make-array max-ipix :initial-element nil))
+	 (pix-hv (make-array max-ipix :initial-element 0))
 	 (ipix 0))
 ;    (format t "Declarei tudo~%")
 ;    (format t "linhas:~a colunas:~a max-ipix:~a~%" linhas colunas max-ipix)
@@ -170,10 +174,11 @@
 
 	    (setf (aref pix-a-volta ipix) a-volta)
 	    (push ipix pix-natribuidos)
-	    
+
 	    (when (numberp pix)
 	      (when (> pix a-volta-len) (setf pix-solucionavel nil) (return-from ciclos))
 
+	      (setf (aref pix-pix ipix) pix)
 	      (let* ((restricao (cria-restricao-fapix a-volta pix a-volta-len))
 		     (dominio (if (= pix 0) (list 0) (if (= pix a-volta-len) (list 1) nil))))
 
@@ -191,6 +196,20 @@
 		    (push ipix-av (aref dominio-len 1))
 		    (setf (aref pix-dominio-len-p ipix-av) t)))))
 
+	    (let* ((soma 0)
+		   (numero 0))
+
+	      (dolist (ipix-av a-volta)
+		(let ((pix-av (aref tab (linha ipix-av colunas) (coluna ipix-av colunas))))
+		  (when pix-av
+		    (incf soma pix-av)
+		    (incf numero))))
+	    (when (= ipix 9) (format t "a-volta:~a soma:~a~%" a-volta soma))
+	      (when (and (not (= numero 0)) (>= (round (round soma numero) a-volta-len) 1))
+;		(setf (aref pix-hv ipix) 1)
+		))
+
+
 	    (incf ipix)))))
 
     (dotimes (i max-ipix)
@@ -200,7 +219,7 @@
       (delete-duplicates (aref pix-relacionados i)))
 ;    (nreverse pix-natribuidos)
 
-
+    (desenha-fill-a-pix (array->fill-a-pix pix-hv linhas colunas))
 ;    (format t "Percorri o tab todo~%")
     (make-fapix :linhas linhas
 		:colunas colunas
@@ -212,7 +231,9 @@
 		:relacionados pix-relacionados
 		:natribuidos pix-natribuidos
 		:solucionavel pix-solucionavel
-		:dominio-len dominio-len)))
+		:dominio-len dominio-len
+		:pix pix-pix
+		:hv pix-hv)))
 
 (defun fapix->fill-a-pix (f)
   ""
@@ -220,6 +241,11 @@
 	 (tab (make-array (list (fapix-linhas f) colunas))))
     (dotimes (ipix (fapix-max-ipix f) tab)
       (setf (aref tab (linha ipix colunas) (coluna ipix colunas)) (fapix-pix-cor f ipix)))))
+
+(defun array->fill-a-pix (a linhas colunas)
+  (let ((tab (make-array (list linhas colunas))))
+    (dotimes (ipix (* linhas colunas) tab)
+      (setf (aref tab (linha ipix colunas) (coluna ipix colunas)) (aref a ipix)))))
 
 (defun algoritmo (f)
   ""
@@ -237,6 +263,40 @@
     (dolist (ipix (aref (fapix-dominio-len f) i-len))
 	(return-from fapix-mrv ipix))))
 
+(defun fapix-mrv2 (f)
+  ""
+  (dolist (ipix (aref (fapix-dominio-len f) 1))
+    (return-from fapix-mrv2 ipix))
+  (format t "usando o criterio de desempate em:~a~%" (aref (fapix-dominio-len f) 2))
+  ;; criterio de desempate para quando o comprimento do dominio e 2
+  (let* ((max-ipix (first (aref (fapix-dominio-len f) 2)))
+	 (max-rel-natrib (count-if-not #'(lambda (ipix-r) (fapix-pix-cor f ipix-r))
+				       (aref (fapix-relacionados f) max-ipix))))
+
+    (dolist (ipix (aref (fapix-dominio-len f) 2) max-ipix)
+      (let ((rel-natrib (count-if-not #'(lambda (ipix-r) (fapix-pix-cor f ipix-r))
+				      (aref (fapix-relacionados f) ipix))))
+	(when (> rel-natrib max-rel-natrib)
+	  (setf max-rel-natrib rel-natrib)
+	  (setf max-ipix ipix))))))
+
+(defun fapix-mrv3 (f)
+  ""
+  (dolist (ipix (aref (fapix-dominio-len f) 1))
+    (return-from fapix-mrv3 ipix))
+
+  ;; criterio de desempate para quando o comprimento do dominio e 2
+  (let* ((max-ipix (first (aref (fapix-dominio-len f) 2)))
+	 (max-atrib-a-volta (count-if #'(lambda (ipix-av) (fapix-pix-cor f ipix-av))
+				      (aref (fapix-a-volta f) max-ipix))))
+
+    (dolist (ipix (aref (fapix-dominio-len f) 2) max-ipix)
+      (let ((atrib-a-volta (count-if #'(lambda (ipix-av) (fapix-pix-cor f ipix-av))
+				     (aref (fapix-a-volta f) ipix))))
+	(when (> atrib-a-volta max-atrib-a-volta)
+	  (setf max-atrib-a-volta atrib-a-volta)
+	  (setf max-ipix ipix))))))
+
 (defun procura-retrocesso-fc-mrv-fapix (f)
   ""
 ;  (format t "pr-fc-mrv~%")
@@ -244,11 +304,14 @@
     (when (fapix-completo-p f)
       (return-from procura-retrocesso-fc-mrv-fapix (values f testes-totais)))
 
-    (let* ((ipix (fapix-mrv f))
-	   (d (fapix-pix-dominio f ipix))
-	   )
-;      (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" ipix (fapix-pix-dominio f ipix))
-      ; TODO: heuristica de valor (media dos pixs a volta? implica mais um array)
+    (let* ((ipix (fapix-mrv3 f))
+	   (d (fapix-pix-dominio f ipix)))
+
+      (when (= (length d) 2)
+        (when (= (aref (fapix-hv f) ipix) 1)
+	  (setf d (reverse d))))
+
+;     (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" ipix (fapix-pix-dominio f ipix))
       (dolist (cor d)
 	(multiple-value-bind (consistente testes) (fapix-atribuicao-consistente-p f ipix cor)
 	  (incf testes-totais testes)
@@ -300,6 +363,81 @@
 
     (return-from procura-retrocesso-fc-mrv-fapix (values nil testes-totais))))
 
+(defun procura-retrocesso-mac-mrv-fapix (f)
+  ""
+;  (format t "pr-mac-mrv~%")
+  (let ((testes-totais 0))
+    (when (fapix-completo-p f)
+      (return-from procura-retrocesso-mac-mrv-fapix (values f testes-totais)))
+
+    (let* ((ipix (fapix-mrv f))
+	   (d (fapix-pix-dominio f ipix))
+	   )
+      (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" ipix (fapix-pix-dominio f ipix))
+      ; TODO: heuristica de valor (media dos pixs a volta? implica mais um array)
+      (when (= (length d) 2)
+	(let* ((a-volta (aref (fapix-a-volta f) ipix))
+	       (a-volta-len (length a-volta))
+	       (soma 0)
+	       (numero 0))
+
+	  (dolist (ipix-av a-volta)
+	    (let ((pix (aref (fapix-pix f) ipix-av)))
+	      (when pix (incf soma pix) (incf numero))))
+
+	  (when (and (not (= numero 0)) (= (round (round soma numero) a-volta-len) 1))
+	    (setf d (reverse d)))))
+
+      (dolist (cor d)
+	(multiple-value-bind (consistente testes) (fapix-atribuicao-consistente-p f ipix cor)
+	  (incf testes-totais testes)
+	  (when consistente
+	    (format t "Atribuindo o valor:~a a variavel:~a~%" cor ipix)
+	    (fapix-adiciona-atribuicao! f ipix cor)
+	    (setf (fapix-natribuidos f) (remove ipix (fapix-natribuidos f)))
+;	    (format t "natribuidos:~a~%" (fapix-natribuidos f))
+	    (setf (aref (fapix-dominio-len f) (length d))
+		  (remove ipix (aref (fapix-dominio-len f) (length d))))
+;	    (format t "dominio-len:~a~%" (fapix-dominio-len f))
+;	    (format t "Depois da atribuicao~%")
+	    (desenha-fill-a-pix (fapix->fill-a-pix f))
+	    (multiple-value-bind (inferencias testes) (fapix-mac f ipix)
+	      (format t "PR: inferencias:~a~%" inferencias)
+	      (incf testes-totais testes)
+	      (when inferencias ; teste suficiente?
+		(let ((backup (make-hash-table :test 'eql)))
+		  (maphash #'(lambda (iipix id)
+;			       (format t "iipix:~a id:~a~%" iipix id)
+			       (setf (gethash iipix backup) (fapix-pix-dominio f iipix))
+			       (fapix-altera-dominio! f iipix id))
+			   inferencias)
+
+;		  (format t "Depois das inferencias~%")
+;		  (desenha-fill-a-pix (fapix->fill-a-pix f))
+
+		  (multiple-value-bind (resultado testes) (procura-retrocesso-mac-mrv-fapix f)
+		    (incf testes-totais testes)
+		    (when resultado
+		      (return-from procura-retrocesso-mac-mrv-fapix (values resultado testes-totais))))
+
+		  (maphash #'(lambda (bipix bd)
+			       (fapix-altera-dominio! f bipix bd))
+			   backup)
+
+;		  (print "Removidas as inferencias:")
+;		  (desenha-fill-a-pix (fapix->fill-a-pix f))
+		  ))
+
+	      (fapix-remove-atribuicao! f ipix)
+	      (push ipix (fapix-natribuidos f))
+;;	      (push ipix (aref (fapix-dominio-len f) (length d)))
+	      (nconc (aref (fapix-dominio-len f) (length d)) (list ipix)) ; TODO:
+
+	      (print "Removendo a atribuicao:")
+	      (desenha-fill-a-pix (fapix->fill-a-pix f))
+	      )))))
+
+    (return-from procura-retrocesso-mac-mrv-fapix (values nil testes-totais))))
 
 (defun fapix-forward-checking (f ipix)
   ""
@@ -321,11 +459,34 @@
 
     (return-from fapix-forward-checking (values inferencias testes-totais))))
 
+(defun fapix-mac (f ipix)
+  ""
+  (let ((testes-totais 0)
+	(inferencias (make-hash-table :test 'eql))
+	(lista-arcos (fapix-arcos-vizinhos-nao-atribuidos f ipix)))
+
+    (dolist (arco lista-arcos)
+      (let ((v2 (first arco))
+	    (v1 (rest arco)))
+
+	(multiple-value-bind (revise testes) (fapix-revise f v2 v1 inferencias)
+	  (incf testes-totais testes)
+	  (when revise
+	    (multiple-value-bind (d exists) (gethash v2 inferencias)
+	      (when exists
+		(when (= (length d) 0)
+		  (return-from fapix-mac (values nil testes-totais)))))
+
+	    (nconc lista-arcos (remove (cons v1 v2)
+				       (fapix-arcos-vizinhos-nao-atribuidos f v2)
+				       :test 'equal))))))
+
+    (return-from fapix-mac (values inferencias testes-totais))))
+
 (defun fapix-arcos-vizinhos-nao-atribuidos (f ipix)
   ""
   (loop for relacionado in (aref (fapix-relacionados f) ipix) unless (fapix-pix-cor f relacionado)
        collect (cons relacionado ipix)))
-
 
 (defun fapix-revise (f x y inferencias)
   ""
@@ -351,3 +512,4 @@
       (setf (gethash x inferencias) novo-dominio-x)) ; TODO: sobrepor?
 
     (values revised testes-totais)))
+
