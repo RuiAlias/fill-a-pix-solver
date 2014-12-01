@@ -98,24 +98,6 @@
     (if atribuicao (fapix-adiciona-atribuicao! f ipix atribuicao) (fapix-remove-atribuicao! f ipix))
     (values consistente falhou)))
 
-;; (defun fapix-atribuicoes-consistentes-arco-p (f ipix1 cor1 ipix2 cor2)
-;;   ""
-;;   (let ((atribuicao1 (fapix-pix-cor f ipix1))
-;; 	(atribuicao2 (fapix-pix-cor f ipix2))
-;; 	(consistente t))
-
-;;     (fapix-adiciona-atribuicao! f ipix1 cor1)
-;;     (fapix-adiciona-atribuicao! f ipix2 cor2)
-;;     (dolist (r (fapix-pix-restricoes f ipix1))
-;;       (when (find ipix2 (restricao-fapix-ipixs r) :test '=)
-;; 	(when (null (funcall (restricao-fapix-funcao-validacao r) f))
-;; 	  (setf consistente nil)
-;; 	  (return))))
-
-;;     (if atribuicao1 (fapix-adiciona-atribuicao! f ipix1 atribuicao1) (fapix-remove-atribuicao! f ipix1))
-;;     (if atribuicao2 (fapix-adiciona-atribuicao! f ipix2 atribuicao2) (fapix-remove-atribuicao! f ipix2))
-;;     (values consistente testes)))
-
 (defun fapix-atribuicoes-consistentes-p (f ipix1 cor1 ipix2 cor2)
   ""
   (let ((atribuicao1 (fapix-pix-cor f ipix1))
