@@ -261,7 +261,7 @@
   ""
   (when (not (fapix-solucionavel f)) (return-from algoritmo nil))
   
-  (procura-retrocesso-fc-mrv-fapix f))
+  (procura-retrocesso-mac-mrv-fapix f))
 
 (defun resolve-best (tab)
   ""
