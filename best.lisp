@@ -204,7 +204,7 @@
 		  (when pix-av
 		    (incf soma pix-av)
 		    (incf numero))))
-	    (when (= ipix 9) (format t "a-volta:~a soma:~a~%" a-volta soma))
+
 	      (when (and (not (= numero 0)) (>= (round (round soma numero) a-volta-len) 1))
 ;		(setf (aref pix-hv ipix) 1)
 		))
@@ -219,7 +219,7 @@
       (delete-duplicates (aref pix-relacionados i)))
 ;    (nreverse pix-natribuidos)
 
-    (desenha-fill-a-pix (array->fill-a-pix pix-hv linhas colunas))
+;    (desenha-fill-a-pix (array->fill-a-pix pix-hv linhas colunas))
 ;    (format t "Percorri o tab todo~%")
     (make-fapix :linhas linhas
 		:colunas colunas
@@ -354,8 +354,7 @@
 
 	      (fapix-remove-atribuicao! f ipix)
 	      (push ipix (fapix-natribuidos f))
-;;	      (push ipix (aref (fapix-dominio-len f) (length d)))
-	      (nconc (aref (fapix-dominio-len f) (length d)) (list ipix)) ; TODO:
+	      (push ipix (aref (fapix-dominio-len f) (length d)))
 
 ;	      (print "Removendo a atribuicao:")
 ;	      (desenha-fill-a-pix (fapix->fill-a-pix f))
