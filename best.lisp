@@ -175,7 +175,7 @@
 	      (when (> pix a-volta-len) (setf pix-solucionavel nil) (return-from ciclos))
 
 	      (let* ((restricao (cria-restricao-fapix a-volta pix a-volta-len))
-		     (dominio (if (= pix 0) (list 0) (if (= pix 9) (list 1) nil))))
+		     (dominio (if (= pix 0) (list 0) (if (= pix a-volta-len) (list 1) nil))))
 
 		(dolist (ipix-av a-volta)
 ;		  (format t "ipix:~a pix:~a a-volta:~a ipix-av:~a~%" ipix pix a-volta ipix-av)
@@ -248,6 +248,7 @@
 	   (d (fapix-pix-dominio f ipix))
 	   )
 ;      (format t "Vou experimentar a variavel:~a cujo dominio e:~a~%" ipix (fapix-pix-dominio f ipix))
+      ; TODO: heuristica de valor (media dos pixs a volta? implica mais um array)
       (dolist (cor d)
 	(multiple-value-bind (consistente testes) (fapix-atribuicao-consistente-p f ipix cor)
 	  (incf testes-totais testes)
@@ -290,7 +291,8 @@
 
 	      (fapix-remove-atribuicao! f ipix)
 	      (push ipix (fapix-natribuidos f))
-	      (push ipix (aref (fapix-dominio-len f) (length d)))
+;;	      (push ipix (aref (fapix-dominio-len f) (length d)))
+	      (nconc (aref (fapix-dominio-len f) (length d)) (list ipix)) ; TODO:
 
 ;	      (print "Removendo a atribuicao:")
 ;	      (desenha-fill-a-pix (fapix->fill-a-pix f))
