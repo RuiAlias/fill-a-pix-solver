@@ -503,19 +503,20 @@
 
 (defstruct fapix
   ""
-  linhas
-  colunas
-  max-ipix
-  dominio
-  atribuicao
-  restricoes
-  a-volta
-  relacionados
-  natribuidos
-  solucionavel
-  dominio-len
-  pix
-  hv)
+  linhas ; numero de linhas do tabuleiro
+  colunas ; numero de colunas do tabuleiro
+  max-ipix ; numero posicoes do tabuleiro
+  dominio ; array: dominio de cada pix
+  atribuicao ; array: atribuicao de cada pix
+  restricoes ; array: lista de restricoes associadas a cada pix
+  a-volta ; array: lista de indices de pixs a volta de cada pix
+  relacionados ; array: lista de pixs relacionados por uma restricao de cada pix
+  natribuidos ; lista: indices de pixs nao atribuidos
+  solucionavel ; valor logico: auxiliar para tabuleiros impossiveis
+  dominio-len ; array: listas com indices de pixs por comprimento de dominio
+  pix ; array: numero da casa no tabuleiro de cada pix (nil quando nao tem numero)
+  hv) ; array: valor da heuristica de valor (acabou por nao ser usado visto nao se ter encontrado
+      ; calculo util e eficiente)
 
 
 (defun cria-restricao-fapix (ipixs pix a-volta-len)
@@ -652,7 +653,7 @@ pretos ha na lista."
       collect c)))
 
 (defun fill-a-pix->fapix (tab) ; tab de tabuleiro
-  ""
+  "Converte um tabuleiro fill-a-pix para um `fapix'."
   (let* ((linhas (array-dimension tab 0))
 	 (colunas (array-dimension tab 1))
 	 (max-ipix (* linhas colunas))
@@ -736,16 +737,11 @@ pretos ha na lista."
 		:hv pix-hv)))
 
 (defun fapix->fill-a-pix (f)
-  ""
+  "Converte um `fapix' para um tabuleiro fill-a-pix."
   (let* ((colunas (fapix-colunas f))
 	 (tab (make-array (list (fapix-linhas f) colunas))))
     (dotimes (ipix (fapix-max-ipix f) tab)
       (setf (aref tab (linha ipix colunas) (coluna ipix colunas)) (fapix-pix-cor f ipix)))))
-
-(defun array->fill-a-pix (a linhas colunas)
-  (let ((tab (make-array (list linhas colunas))))
-    (dotimes (ipix (* linhas colunas) tab)
-      (setf (aref tab (linha ipix colunas) (coluna ipix colunas)) (aref a ipix)))))
 
 (defun algoritmo (f)
   ""
@@ -757,10 +753,10 @@ pretos ha na lista."
   ""
   (fapix->fill-a-pix (algoritmo (fill-a-pix->fapix tab))))
 
-(defun fapix-mrv (f)
+(defun fapix-mrv-modificado (f)
   ""
   (dolist (ipix (aref (fapix-dominio-len f) 1))
-    (return-from fapix-mrv ipix))
+    (return-from fapix-mrv-modificado ipix))
 
   ;; criterio de desempate para quando o comprimento do dominio e 2
   (let* ((max-ipix (first (aref (fapix-dominio-len f) 2)))
@@ -781,11 +777,10 @@ pretos ha na lista."
 
 (defun procura-retrocesso-fc-mrv-fapix (f)
   ""
-;  (format t "pr-fc-mrv~%")
   (when (fapix-completo-p f)
     (return-from procura-retrocesso-fc-mrv-fapix (values f 0)))
 
-  (let* ((ipix (fapix-mrv f))
+  (let* ((ipix (fapix-mrv-modificado f))
 	 (d (fapix-pix-dominio f ipix)))
 
     (when (= (length d) 2)
@@ -825,7 +820,7 @@ pretos ha na lista."
   (when (fapix-completo-p f)
     (return-from procura-retrocesso-mac-mrv-fapix (values f 0)))
 
-  (let* ((ipix (fapix-mrv f))
+  (let* ((ipix (fapix-mrv-modificado f))
 	 (d (fapix-pix-dominio f ipix)))
 
     (when (= (length d) 2)
@@ -914,4 +909,3 @@ pretos ha na lista."
   ""
   (loop for ipix-rel in (aref (fapix-relacionados f) ipix) unless (fapix-pix-cor f ipix-rel)
        collect (cons ipix-rel ipix)))
-
