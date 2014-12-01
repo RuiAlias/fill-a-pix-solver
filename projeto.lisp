@@ -233,7 +233,7 @@
 	(return-from procura-retrocesso-simples (values p testes-total))
 	(let* ((v (first (psr-variaveis-nao-atribuidas p)))
 	       (d (psr-variavel-dominio p v)))
-;	  (format t "v:~a d:~a~%" v d)
+
 	  (dolist (valor d)
 	    (multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
 	      (incf testes-total testes)
@@ -274,10 +274,6 @@
     (if (null p) nil (psr->fill-a-pix p (array-dimension tab 0) (array-dimension tab 1)))))
 
 
-(defparameter LC 5)
-(defparameter DEBUG t)
-
-
 (defun n-restricoes-c-natribuidas (p v)
   ""
   (count-if #'(lambda (r) (some #'(lambda (v1) (and (not (equal v1 v))
@@ -288,8 +284,6 @@
 
 (defun psr-var-maior-grau (p)
   ""
-;  (dolist (v (sort (psr-variaveis-nao-atribuidas p) #'> :key #'(lambda (v) (n-restricoes-c-natribuidas p v))))
-;    (format DEBUG "GRAU: v:~a grau:~a~%" v (n-restricoes-c-natribuidas p v)))
   (first (sort (psr-variaveis-nao-atribuidas p)
 	       #'>
 	       :key #'(lambda (v) (n-restricoes-c-natribuidas p v)))))
