@@ -33,60 +33,70 @@
 							       (<= brancos (- a-volta-len pix)))))))
 
 (defun fapix-ipixs-nao-atribuidos (f)
-  "Devolve lista de ipixs nao atribuidos."
+  "Recebe um `fapix' e devolve a lista de ipixs nao atribuidos desse fapix."
   (fapix-natribuidos f))
 
 (defun fapix-pix-cor (f ipix)
-  "Devolve a cor (atribuicao) de um pix ou nil caso nao tenha atribuicao."
+  "Recebe um `fapix' e um indice de um pix e devolve a cor (atribuicao) associada ao pix ou nil caso
+ nao tenha atribuicao."
   (aref (fapix-atribuicao f) ipix))
 
 (defun fapix-pix-dominio (f ipix)
-  "Devolve o dominio associado a um pix."
+  "Recebe um `fapix' e um indice de um pix e devolve o dominio associado ao pix."
   (let ((cor (fapix-pix-cor f ipix)))
     (if cor
 	(list cor)
 	(aref (fapix-dominio f) ipix))))
 
 (defun fapix-pix-restricoes (f ipix)
-  "Devolve uma lista com todas as restricoes aplicaveis a uma variavel."
+  "Recebe um `fapix' e um indice de um pix e devolve uma lista com todas as restricoes aplicaveis ao
+ pix."
   (aref (fapix-restricoes f) ipix))
 
 (defun fapix-adiciona-atribuicao! (f ipix cor)
-  ""
+  "Recebe um `fapix', um indice de um pix e uma cor (0 para branco e 1 para preto) e atribui a cor 
+ao pix."
   (setf (aref (fapix-atribuicao f) ipix) cor))
 
 (defun fapix-remove-atribuicao! (f ipix)
-  ""
+  "Recebe um `fapix' e um indice de um pix e remove a atribuicao de cor do pix."
   (fapix-adiciona-atribuicao! f ipix nil))
 
 (defun fapix-altera-dominio! (f ipix d)
-  ""
+  "Recebe um `fapix', um indice de um pix e um dominio (lista de cores), atribui esse dominio ao pix
+e atualiza as listas de comprimento de dominio."
   (setf (aref (fapix-dominio-len f) (length (fapix-pix-dominio f ipix)))
 	(remove ipix (aref (fapix-dominio-len f) (length (fapix-pix-dominio f ipix)))))
   (setf (aref (fapix-dominio f) ipix) d)
   (push ipix (aref (fapix-dominio-len f) (length d))))
 
 (defun fapix-completo-p (f)
-  ""
+  "Recebe um `fapix' e testa se o fapix esta completo (se nao tem variaveis sem atribuicao). Retorna
+T se estiver completo e nil caso contrario."
   (null (fapix-ipixs-nao-atribuidos f)))
 
 (defun fapix-testa-restricoes (f restricoes)
-  "Testa uma lista de restricoes e devolve dois valores. O primeiro, um boleano que indica se todas
-  as restricoes se verificam e o segundo indica o numero de testes realizados."
+  "Recebe um `fapix' e uma lista de `restricao-fapix' e testa todas as restricoes. Retorna dois 
+valores. O primeiro e um valor logico que indica se todas as restricoes se verificam. O segundo e
+a ultima restricao a ser testada caso nem todas as restricoes se verifiquem e NIL caso contrario. Se
+a lista de restricoes estiver vazia e devolvido T e NIL."
   (dolist (r restricoes (values t nil))
     (when (null (funcall (restricao-fapix-funcao-validacao r) f))
       (return (values nil r)))))
 
 (defun fapix-consistente-p (f)
-  "Testa todas as restricoes do fapix."
+  "Recebe um `fapix' e testa todas as retricoes do mesmo. Retorna o mesmo que 
+`fapix-testa-restricoes'"
   (fapix-testa-restricoes f (fapix-restricoes f)))
 
 (defun fapix-pix-consistente-p (f ipix)
-  "Testa as restricoes associadas ao 'ipix'."
+  "Recebe um `fapix' e um indice de um pix e testa as restricoes associadas ao pix. Retorna o mesmo 
+que `fapix-testa-restricoes'."
   (fapix-testa-restricoes f (fapix-pix-restricoes f ipix)))
 
 (defun fapix-atribuicao-consistente-p (f ipix cor)
-  ""
+  "Recebe um `fapix', um indice de um pix e uma cor. Testa se a atribuicao da cor ao pix e 
+consistente com as restricoes associadas ao pix. Retorna o mesmo que `fapix-testa-restricoes'."
   (let ((atribuicao (fapix-pix-cor f ipix))
 	(consistente t)
 	(falhou nil))
@@ -99,7 +109,10 @@
     (values consistente falhou)))
 
 (defun fapix-atribuicoes-consistentes-p (f ipix1 cor1 ipix2 cor2)
-  ""
+  "Recebe um `fapix', dois indices de pixs e duas cores. Testa se a atribuicao da cor1 ao pix1 e da 
+cor2 ao pix2 e consistente com as restricoes associadas a ambos os pix (testa as restricoes de forma
+ sequencial - primeiro as do pix1 e depois as do pix2). Retorna o mesmo que `fapix-testa-restricoes'
+."
   (let ((atribuicao1 (fapix-pix-cor f ipix1))
 	(atribuicao2 (fapix-pix-cor f ipix2))
 	(consistente t))
@@ -118,7 +131,8 @@
     (values consistente 0)))
 
 (defun fapix-conta-cores (f ipixs)
-  ""
+  "Recebe um `fapix' e uma lista de indices de pixs. Retorna dois valores: quantos pixs brancos e 
+pretos ha na lista."
   (let ((brancos 0)
 	(pretos 0))
 
