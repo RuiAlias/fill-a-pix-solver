@@ -653,12 +653,11 @@ pretos ha na lista."
 	 (max-ipix (* linhas colunas))
 	 (pix-dominio (make-array max-ipix :initial-element (list 0 1)))
 	 (pix-atribuicoes (make-array max-ipix :initial-element nil))
-	 (pix-restricoes (make-array max-ipix :initial-element nil)) ; ipix->lista de restricoes
+	 (pix-restricoes (make-array max-ipix :initial-element nil))
 	 (pix-a-volta (make-array max-ipix :initial-element nil))
-	 (pix-relacionados (make-array max-ipix :initial-element nil)) ; lista de ipix relacionados
-					                               ; por restricao
+	 (pix-relacionados (make-array max-ipix :initial-element nil))
 	 (pix-natribuidos (list))
-	 (pix-solucionavel t) ; t de talvez :D
+	 (pix-solucionavel t) ; t de talvez
 	 (dominio-len (make-array 3 :initial-element nil))
 	 (pix-dominio-len-p (make-array max-ipix :initial-element nil))
 	 (pix-pix (make-array max-ipix :initial-element nil))
@@ -704,9 +703,9 @@ pretos ha na lista."
 		    (incf soma pix-av)
 		    (incf numero))))
 
-	      (when (and (not (= numero 0)) (>= (round (round soma numero) a-volta-len) 1))
-;		(setf (aref pix-hv ipix) 1)
-		))
+;;	      (when (and (not (= numero 0)) (>= (round (round soma numero) a-volta-len) 1))
+;;		(setf (aref pix-hv ipix) 1)
+;;		))
 
 
 	    (incf ipix)))))
@@ -777,9 +776,9 @@ pretos ha na lista."
   (let* ((ipix (fapix-mrv-modificado f))
 	 (d (fapix-pix-dominio f ipix)))
 
-    (when (= (length d) 2)
-      (when (= (aref (fapix-hv f) ipix) 1)
-	(setf d (reverse d))))
+    ;; (when (= (length d) 2)
+    ;;   (when (= (aref (fapix-hv f) ipix) 1)
+    ;; 	(setf d (reverse d))))
 
     (dolist (cor d)
       (fapix-adiciona-atribuicao! f ipix cor)
@@ -817,9 +816,9 @@ pretos ha na lista."
   (let* ((ipix (fapix-mrv-modificado f))
 	 (d (fapix-pix-dominio f ipix)))
 
-    (when (= (length d) 2)
-      (when (= (aref (fapix-hv f) ipix) 1)
-	(setf d (reverse d))))
+    ;; (when (= (length d) 2)
+    ;;   (when (= (aref (fapix-hv f) ipix) 1)
+    ;; 	(setf d (reverse d))))
 
     (dolist (cor d)
       (fapix-adiciona-atribuicao! f ipix cor)
