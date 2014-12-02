@@ -183,7 +183,7 @@
 
 (defun psr-conta-valor (p variaveis valor)
   "Devolve o numero de variaveis (do argumento) que tem como valor o 'valor'."
-  (count valor variaveis :key #'(lambda (v) (psr-variavel-valor p v)) :test 'eql)) ; TODO: eql vs =
+  (count valor variaveis :key #'(lambda (v) (psr-variavel-valor p v)) :test 'eql))
 
 
 ;;; fill-a-pix->psr: array -> PSR
@@ -196,7 +196,7 @@
 	(push (list 0 1) dominios)
 	(when (numberp (aref tab l c))
 	  (let ((vav (variaveis-a-volta l c (array-dimension tab 0) (array-dimension tab 1)))
-		(numero (aref tab l c))) ; TODO testar se e mesmo preciso e se sim passar para antes do when
+		(numero (aref tab l c)))
 	    (push 
 	     (cria-restricao 
 	      vav
@@ -335,7 +335,7 @@
   (let ((testes-totais 0))
     (when (psr-completo-p p) (return-from procura-retrocesso-fc-mrv (values p testes-totais)))
 
-    (let* ((v (psr-mrv p)))
+    (let ((v (psr-mrv p)))
       (dolist (valor (psr-variavel-dominio p v))
 	(multiple-value-bind (consistente testes) (psr-atribuicao-consistente-p p v valor)
 	  (incf testes-totais testes)
@@ -706,7 +706,7 @@ pretos ha na lista."
 ;;	      (when (and (not (= numero 0)) (>= (round (round soma numero) a-volta-len) 1))
 ;;		(setf (aref pix-hv ipix) 1)
 ;;		))
-
+	      )
 
 	    (incf ipix)))))
 
